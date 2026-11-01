@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Päť nápovedí</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<style>
+/* Layout: jedna stĺpcová tabuľa, riadok = téma + 5 políčok; otázka sa otvorí na celú plochu. */
+:root{
+  --bg:#F1F3F9; --surface:#FFFFFF; --surface-2:#E6EAF4; --ink:#0F1630; --ink-2:#566080; --line:#CDD4E6;
+  --accent:#2340D8; --on-accent:#FFFFFF; --gold:#FFC21A; --on-gold:#231800; --good:#0E7A4B; --bad:#B42318;
+  --display:'Big Shoulders Display','Arial Narrow','Helvetica Neue',Arial,sans-serif;
+  --body:'Instrument Sans','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1021; --surface:#151B33; --surface-2:#1E2644; --ink:#EDF0FB; --ink-2:#9AA5C9; --line:#2C3659;
+    --accent:#8EA6FF; --on-accent:#0A0F26; --gold:#FFC933; --on-gold:#231800; --good:#4ADE9A; --bad:#FF8A80;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1021; --surface:#151B33; --surface-2:#1E2644; --ink:#EDF0FB; --ink-2:#9AA5C9; --line:#2C3659;
+  --accent:#8EA6FF; --on-accent:#0A0F26; --gold:#FFC933; --on-gold:#231800; --good:#4ADE9A; --bad:#FF8A80;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+#app{max-width:980px;margin:0 auto;padding-block:24px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+h1,h2,.cat,.pts,.ps{font-family:var(--display);text-transform:uppercase;letter-spacing:.02em;line-height:1}
+h1{font-size:clamp(2.6rem,9vw,4.6rem);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(2rem,6vw,3rem);font-weight:900;margin:.1em 0 .2em;text-wrap:balance}
+.kicker{font-size:.8rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0 0 .6rem}
+.lede{max-width:60ch;color:var(--ink-2);margin:.8rem 0 0}
+
+/* ladder */
+.ladder{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.ladder li{font-family:var(--display);font-weight:900;font-size:1.5rem;text-align:center;padding:.45rem 0;border:1px solid var(--line);border-radius:6px;color:var(--ink-2);background:transparent}
+.ladder li.past{background:var(--surface-2);color:var(--ink-2);text-decoration:line-through;text-decoration-thickness:2px}
+.ladder li.cur{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.ladder.big{margin:1.6rem 0 0;max-width:520px}
+.ladder.big li{font-size:2rem;padding:.6rem 0;color:var(--ink)}
+.ladder.big li:nth-child(n){opacity:1}
+
+/* setup */
+.setup{padding-top:2vh}
+.plist{display:grid;gap:10px;margin:2rem 0 0;padding:0;list-style:none;max-width:520px}
+.plist li{display:flex;gap:8px}
+.plist input{flex:1;min-width:0;padding:.7rem .85rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.plist input::placeholder{color:var(--ink-2)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:1.4rem}
+
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:.7rem 1.1rem;border-radius:6px;font-weight:600;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.small{padding:.45rem .8rem;font-size:.9rem}
+
+/* board */
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.top h1{font-size:clamp(2.2rem,7vw,3.4rem)}
+.players{list-style:none;margin:1.2rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.player{display:flex;align-items:baseline;gap:.7rem;padding:.5rem .9rem;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.player .pn{font-weight:600;overflow-wrap:anywhere}
+.player .ps{font-weight:900;font-size:1.7rem}
+.player .turn{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.player.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.status{margin:1rem 0 .4rem;color:var(--ink-2)}
+.status strong{color:var(--ink)}
+.board{margin-top:.6rem}
+.row{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(5,minmax(0,1fr));gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.row:last-child{border-bottom:1px solid var(--line)}
+.cat{font-weight:900;font-size:1.45rem;overflow-wrap:anywhere}
+.cat small{display:block;font-family:var(--body);font-weight:500;font-size:.78rem;letter-spacing:.04em;text-transform:none;color:var(--ink-2);margin-top:.25rem}
+.tile{height:54px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-family:var(--display);font-weight:900;font-size:1.7rem;cursor:pointer;color:var(--ink)}
+.tile:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.tile.done{background:var(--gold);border-color:var(--gold);color:var(--on-gold);cursor:default}
+.tile.done.zero{background:var(--surface-2);border-color:var(--line);color:var(--ink-2)}
+.tile.empty{border-style:dashed;background:transparent;color:var(--ink-2);cursor:default;opacity:.7}
+.final{margin:1rem 0 0;padding:1rem 1.2rem;border:2px solid var(--gold);border-radius:6px;background:var(--surface)}
+.final h2{margin:0 0 .3rem}
+.foot{margin-top:1.4rem;font-size:.85rem;color:var(--ink-2)}
+
+/* question */
+.qwrap{max-width:720px;margin:0 auto}
+.qhead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;color:var(--ink-2);font-weight:600}
+.qhead strong{color:var(--ink)}
+.worth{display:flex;align-items:flex-end;gap:.5rem;margin:1rem 0 .9rem}
+.worth .pts{font-weight:900;font-size:clamp(4.5rem,22vw,7.5rem);color:var(--ink)}
+.worth .unit{font-family:var(--display);font-weight:900;font-size:2rem;padding-bottom:.9rem;color:var(--ink-2)}
+.hints{list-style:none;margin:1.2rem 0 0;padding:0;display:grid;gap:8px}
+.hint{display:grid;grid-template-columns:4.2rem minmax(0,1fr);gap:.9rem;align-items:baseline;padding:.8rem 1rem;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.hint .pts{font-weight:900;font-size:1.5rem;color:var(--ink-2)}
+.hint p{margin:0;overflow-wrap:anywhere}
+.hint.new{border:2px solid var(--accent);padding:calc(.8rem - 1px) calc(1rem - 1px)}
+.hint.new .pts{color:var(--accent)}
+.hint.new p{font-size:1.15rem;font-weight:500}
+.hint.rest{background:transparent;border-style:dashed;color:var(--ink-2)}
+.skip{margin-top:10px}
+.result{margin-top:1.4rem;padding:1.2rem;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.result.solved{border:2px solid var(--good)}
+.result.failed{border-style:dashed}
+.result .kicker.ok{color:var(--good)}
+.result p{margin:.2rem 0 1rem}
+
+@media (max-width:620px){
+  .row{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .cat{grid-column:1/-1}
+  .tile{height:50px}
+  .hint{grid-template-columns:3.4rem minmax(0,1fr);gap:.6rem}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+  var LADDER=[100,80,60,40,20];
+  var KEY='pat-napovedi-v1';
+
+  /* Otázky: hints[0] je najťažšia (100 b), hints[4] najľahšia (20 b).
+     Každá téma má 5 miest, nevyplnené miesta sa na tabuli zobrazia ako „–“. */
+  var CATS=[
+    {id:'geografia',name:"Geografia",q:[
+      {answer:"Grónsko",hints:[
+        "Patrí medzi najredšie osídlené územia sveta, na jedného človeka tu pripadá zhruba sedem štvorcových kilometrov.",
+        "V roku 1985 ako prvé územie opustilo predchodcu dnešnej Európskej únie, hoci k nemu pristúpilo ešte ako súčasť iného štátu.",
+        "Hlavné mesto Nuuk leží na juhozápadnom pobreží a žije v ňom takmer tretina obyvateľov.",
+        "Až približne osemdesiat percent jeho plochy pokrýva ľadový štít.",
+        "Najväčší ostrov sveta, ktorý patrí Dánsku."]},
+      {answer:"Mongolsko",hints:[
+        "Symbol na jeho vlajke, vytvorený v roku 1686 mníchom Zanabazarom, je zároveň písmenom starého písma.",
+        "Je druhým najväčším štátom sveta bez prístupu k moru.",
+        "Jeho hlavné mesto je najchladnejším národným hlavným mestom na svete a žije v ňom takmer polovica obyvateľov.",
+        "Na juhu leží púšť Gobi a časť ľudí tu dodnes žije v prenosných okrúhlych stanoch.",
+        "Krajina, z ktorej pochádzal Čingischán."]},
+      {answer:"Dunaj",hints:[
+        "Preteká alebo tvorí hranicu v desiatich štátoch, čo je rekord medzi riekami sveta.",
+        "Jeho pramenné ramená sa spájajú v nemeckom meste Donaueschingen.",
+        "Preteká štyrmi hlavnými mestami: Viedňou, Bratislavou, Budapešťou a Belehradom.",
+        "Valčík Johanna Straussa o jeho modrej farbe patrí k najznámejším skladbám sveta.",
+        "Druhá najdlhšia rieka Európy, preteká Bratislavou."]},
+      {answer:"Nový Zéland",hints:[
+        "Pred príchodom ľudí v 13. storočí tu neboli žiadne suchozemské cicavce okrem netopierov.",
+        "Jeho územie leží na hranici Tichomorskej a Indoaustrálskej tektonickej platne.",
+        "Maorovia ho nazývajú Aotearoa, čo sa prekladá ako „krajina dlhého bieleho oblaku“.",
+        "Natáčala sa tu filmová trilógia o Pánovi prsteňov.",
+        "Ostrovný štát oviec a vtákov kivi na južnej pologuli, neďaleko Austrálie."]},
+      {answer:"Madagaskar",hints:[
+        "Až približne deväťdesiat percent jeho voľne žijúcich druhov rastlín a živočíchov sa inde na svete nenachádza.",
+        "Od indickej pevniny sa oddelil pred zhruba 88 miliónmi rokov.",
+        "Jeho obyvatelia hovoria jazykom príbuzným s jazykmi z Indonézie.",
+        "Žijú tu lemury, ktoré inde v prírode nenájdeš.",
+        "Štvrtý najväčší ostrov sveta pri východnom pobreží Afriky."]}
+    ]},
+    {id:'sport',name:"Šport",q:[
+      {answer:"Usain Bolt",hints:[
+        "Stometrovú trať zvláda približne v 41 krokoch, menej než súperi, a pomalší štart si vynahrádza dĺžkou kroku.",
+        "V detstve hral kriket a futbal a k šprintu ho nasmeroval tréner kriketového tímu.",
+        "Na olympiáde v Pekingu 2008 spomalil tesne pred cieľom a aj tak vytvoril nový svetový rekord.",
+        "Svetový rekord na stometrovej trati, 9,58 s, drží od roku 2009 z Berlína.",
+        "Jamajský šprintér známy víťaznou pózou blesku."]},
+      {answer:"Muhammad Ali",hints:[
+        "Narodil sa pod menom, ktoré mal po otcovi aj po slávnom americkom abolicionistovi.",
+        "S boxom začal ako dvanásťročný, keď mu ukradli bicykel a policajt ho nasmeroval do telocvične.",
+        "Titul v ťažkej váhe stratil v roku 1967, keď odmietol nastúpiť na vojenskú službu vo Vietname.",
+        "Zápas s Georgeom Foremanom v roku 1974 v Zaire sa nazýva Rumble in the Jungle.",
+        "Boxer, ktorý hovoril, že lieta ako motýľ a štípe ako včela."]},
+      {answer:"Pelé",hints:[
+        "Prvé majstrovstvá sveta vyhral ako sedemnásťročný a vo finále strelil dva góly.",
+        "Oficiálne sa volal Edson Arantes do Nascimento a prezývku dostal v detstve v škole.",
+        "Ako jediný hráč vyhral tri majstrovstvá sveta.",
+        "Väčšinu kariéry strávil v klube Santos a nakoniec hral v americkom Cosmose.",
+        "Brazílsky futbalista, prezývaný Čierna perla."]},
+      {answer:"Zdeno Chára",hints:[
+        "V roku 2012 vytvoril vtedajší rekord v súťaži o najsilnejšiu strelu hviezdneho víkendu NHL.",
+        "Meria 206 centimetrov a patril k najvyšším hráčom v histórii NHL.",
+        "Stanleyho pohár ako kapitán Bostonu zdvihol v roku 2011.",
+        "Pochádza z Trenčína a dlhé roky hral za Boston Bruins.",
+        "Slovenský hokejový obranca, ktorý je medzi najlepšími v histórii."]},
+      {answer:"Super Bowl",hints:[
+        "Jeho názov údajne vymyslel vlastník klubu Lamar Hunt podľa skákacej loptičky, s ktorou sa hrali jeho deti.",
+        "Prvý ročník v januári 1967 sa pôvodne volal AFL–NFL World Championship Game.",
+        "Víťazná trofej nesie meno trénera Vincea Lombardiho.",
+        "Koná sa zvyčajne na začiatku februára a v prestávke na ňom vystupujú hudobné hviezdy.",
+        "Finále americkej ligy amerického futbalu NFL."]}
+    ]},
+    {id:'vseobecny',name:"Všeobecný prehľad",q:[
+      {answer:"Žiarovka",hints:[
+        "Najdlhšie nepretržite horiaci exemplár svieti v požiarnej stanici v kalifornskom Livermore od roku 1901.",
+        "Joseph Swan v Anglicku predviedol funkčnú verziu v roku 1878, takmer súčasne s Edisonom.",
+        "Vlákno je dnes väčšinou volfrámové, pôvodne bolo zuhoľnatené z bavlny či bambusu.",
+        "Postupne ju vytláčajú technológie so svetelnými diódami.",
+        "Symbol nápadu, ktorý komiksové postavy zvyknú mať nad hlavou."]},
+      {answer:"Bicykel",hints:[
+        "Jeho predchodca bez pedálov z roku 1817 sa poháňal odrážaním nohami od zeme a vynašiel ho Karl von Drais.",
+        "Retiazkový prevod na zadné koleso sa objavil v 80. rokoch 19. storočia.",
+        "John Dunlop zlepšil jeho pohodlie vynálezom nafukovacej pneumatiky v roku 1888.",
+        "Má dve kolesá, riadidlá a sedlo.",
+        "Dopravný prostriedok, ktorý poháňaš nohami pomocou pedálov."]},
+      {answer:"Zrkadlo",hints:[
+        "Najstaršie známe exempláre z leštenej sopečnej horniny, obsidiánu, pochádzajú z Anatólie spred približne 8 000 rokov.",
+        "V Benátkach 16. storočia sa vyrábalo na ostrove Murano a postup bol prísne strážený.",
+        "Moderný typ vznikol v roku 1835, keď sa sklo začalo pokrývať striebrom.",
+        "Používa sa pri holení, česaní a v autách, aby vodič videl dozadu.",
+        "Vidíš v ňom samého seba."]},
+      {answer:"Hodiny",hints:[
+        "Najstaršie dochované mechanické exempláre s krokovým mechanizmom pochádzajú z veží európskych katedrál zo 14. storočia a ciferník pôvodne nemali.",
+        "Kyvadlový typ vynašiel Christiaan Huygens v roku 1656.",
+        "Dnes sa najpresnejšie meria pomocou kmitov atómov cézia.",
+        "Majú ručičky, ktoré sa otáčajú po ciferníku.",
+        "Pomôcka, ktorá ukazuje čas."]},
+      {answer:"Dáždnik",hints:[
+        "Prvé zobrazenia pochádzajú z Mezopotámie a Egypta, kde spočiatku chránil pred slnkom a bol znakom moci.",
+        "Skladací kovový variant s teleskopickou tyčou patentoval Hans Haupt v roku 1928.",
+        "Rámik tvoria kovové rebrá, na ktorých je napnutá nepremokavá tkanina.",
+        "Má rúčku a otvára sa stlačením tlačidla alebo posunutím jazdca.",
+        "Chráni pred dažďom."]}
+    ]},
+    {id:'mesta',name:"Hlavné mestá",q:[
+      {answer:"Bern",hints:[
+        "Podľa tradície ho pri založení v roku 1191 pomenovali po zvere, ktorú Berthold V. ulovil ako prvú.",
+        "Jeho symbolom je veža z 13. storočia s astronomickými hodinami z 16. storočia.",
+        "Staré mesto je od roku 1983 zapísané v zozname UNESCO.",
+        "Oficiálne je to len „federálne mesto“, pretože ústava slovo hlavné mesto nepoužíva.",
+        "Hlavné mesto krajiny hodiniek a čokolády."]},
+      {answer:"Ankara",hints:[
+        "Dlho ho poznali pod menom odvodeným od plemena kôz, mačiek a králikov s dlhou jemnou srsťou.",
+        "Hlavným mestom sa stalo v roku 1923 a nahradilo Istanbul.",
+        "Stojí tu mauzóleum zakladateľa moderného štátu Mustafu Kemala Atatürka.",
+        "Leží na plošine vo výške približne 900 metrov nad morom.",
+        "Hlavné mesto krajiny, ktorej najväčším mestom je Istanbul."]},
+      {answer:"Wellington",hints:[
+        "Je najjužnejším hlavným mestom suverénneho štátu na svete.",
+        "Patrí k najveternejším mestám sveta.",
+        "Pomenovali ho po vojvodovi, ktorý zvíťazil pri Waterloo.",
+        "Leží na južnom cípe Severného ostrova.",
+        "Hlavné mesto štátu Aotearoa, ktorého najväčším mestom je Auckland."]},
+      {answer:"Nairobi",hints:[
+        "Jeho názov pochádza z masajského výrazu pre „miesto chladnej vody“.",
+        "Vzniklo v roku 1899 ako zásobovacia stanica pri stavbe železnice z Mombasy do Ugandy.",
+        "V jeho hraniciach leží národný park, v ktorom žijú levy a nosorožce.",
+        "Leží vo výške takmer 1 800 metrov, takže je tu mierne podnebie napriek blízkosti rovníka.",
+        "Hlavné mesto východoafrickej krajiny, odkiaľ pochádzajú slávni bežci na dlhé trate."]},
+      {answer:"Lima",hints:[
+        "Založil ho v januári 1535 Francisco Pizarro pod názvom Mesto kráľov.",
+        "Ročne tu spadne len okolo desať milimetrov zrážok, hoci leží pri oceáne.",
+        "Jeho historické centrum je zapísané v zozname UNESCO.",
+        "Leží na pobreží Tichého oceánu pod Andami.",
+        "Hlavné mesto krajiny, v ktorej sa nachádza Machu Picchu."]}
+    ]},
+    {id:'auta',name:"Autá",q:[
+      {answer:"Ford Model T",hints:[
+        "V rokoch 1914 až 1925 sa dodával len v jednej farbe, lebo práve tento lak schol najrýchlejšie.",
+        "Na prvej pohyblivej montážnej linke v roku 1913 sa čas zloženia skrátil z 12 hodín na približne 90 minút.",
+        "Vyrobilo sa ich vyše 15 miliónov kusov, čo bol dlho rekord.",
+        "Štvorvalcový motor mal výkon okolo 20 koní.",
+        "Masovo vyrábané americké auto, ktoré motorizovalo celé národy, prezývané Tin Lizzie."]},
+      {answer:"Mini",hints:[
+        "Jeho konštruktér Alec Issigonis dostal po suezskej kríze zadanie, aby sa doň zmestili štyria dospelí a aby málo spotrebovalo.",
+        "Motor je uložený priečne vpredu a prevodovka je v olejovej vani motora.",
+        "Kolesá sú posunuté do rohov karosérie a majú priemer len desať palcov.",
+        "V roku 1969 hralo vo filme Talianska robota a jazdilo po schodoch aj kanáloch.",
+        "Malé britské auto, dnes pod značkou BMW."]},
+      {answer:"Lamborghini",hints:[
+        "Zakladateľ vyrábal pôvodne traktory a podľa vlastných slov sa pohádal so slávnym zakladateľom konkurenčnej značky v Maranelle.",
+        "V znaku má rozzúreného býka, pretože zakladateľ sa narodil v znamení Býka.",
+        "Modely sa tradične pomenúvajú podľa slávnych býkov z koridy, napríklad Miura či Murciélago.",
+        "Sídli v mestečku Sant’Agata Bolognese.",
+        "Taliansky výrobca superšportov s býkom v logu, dnes patrí pod Audi."]},
+      {answer:"Toyota Prius",hints:[
+        "Prvá generácia z roku 1997 sa najskôr predávala len v Japonsku a jej meno pochádza z latinčiny a znamená „predchádzajúci“.",
+        "Spaľovací motor tu pracuje v Atkinsonovom cykle, ktorý je účinnejší, ale menej výkonný.",
+        "Brzdná energia sa premieňa na elektrickú a ukladá sa v batérii.",
+        "V Hollywoode ho obľúbili celebrity ako ekologické auto.",
+        "Prvý sériovo vyrábaný hybrid."]},
+      {answer:"Jeep",hints:[
+        "Pôvodný návrh pre armádu vznikol v roku 1940 v americkej firme Bantam za 49 dní.",
+        "Vo veľkých počtoch ho pre spojenecké armády vyrábali firmy Willys-Overland a Ford.",
+        "Názov vraj vznikol z výslovnosti skratky GP, čiže „general purpose“.",
+        "Jeho mriežka chladiča so siedmimi zvislými štrbinami je ochrannou známkou.",
+        "Terénne auto, ktoré preslávila druhá svetová vojna, dnes značka Wrangler."]}
+    ]},
+    {id:'historia',name:"História",q:[
+      {answer:"Francúzska revolúcia",hints:[
+        "Zlomovým bodom bola v lete 1789 takzvaná Veľká bázeň, keď sa na vidieku šírili zvesti o zbojníkoch a šľachtických sprisahaniach.",
+        "Zástupcovia tretieho stavu sa 20. júna 1789 v miestnosti s loptovou hrou zaprisahali, že sa nerozídu, kým krajina nebude mať ústavu.",
+        "Dňa 14. júla 1789 Parížania dobyli pevnosť Bastilu.",
+        "Heslom bolo Sloboda, rovnosť, bratstvo a symbolom gilotína.",
+        "Prevrat z konca 18. storočia, ktorý v krajine zvrhol kráľa Ľudovíta XVI."]},
+      {answer:"Krištof Kolumbus",hints:[
+        "Jeho výpočet obvodu Zeme bol výrazne menší než ten, ktorý poznali vtedajší učenci, preto tvrdil, že do Ázie je to blízko.",
+        "Prvú plavbu financovala kastílska kráľovná Izabela I. a vyplával z mesta Palos de la Frontera.",
+        "Prvú zem uzrel 12. októbra 1492 na ostrove, ktorý domorodci volali Guanahani.",
+        "Jeho tri lode sa volali Santa María, Pinta a Niña.",
+        "Taliansky moreplavec, ktorý v službách Španielska objavil Ameriku."]},
+      {answer:"Mária Terézia",hints:[
+        "Z jej šestnástich detí sa dospelosti dožilo desať, medzi nimi aj francúzska kráľovná, ktorú v roku 1793 popravili.",
+        "Na trón jej umožnil nastúpiť dedičský zákon z roku 1713, takzvaná Pragmatická sankcia.",
+        "V roku 1774 zaviedla povinnú školskú dochádzku.",
+        "Vládla štyridsať rokov, od roku 1740 do roku 1780.",
+        "Jediná žena, ktorá vládla Habsburskej monarchii."]},
+      {answer:"Studená vojna",hints:[
+        "Výraz sa prvýkrát objavil v roku 1945 v eseji spisovateľa Georgea Orwella.",
+        "V roku 1962 priviedla svet na hranicu jadrového konfliktu kríza okolo sovietskych rakiet na ostrove v Karibiku.",
+        "Súťaž sa niesla aj vo vesmíre, od prvého satelitu Sputnik po pristátie na Mesiaci.",
+        "Svet sa rozdelil na vojenské bloky NATO a Varšavská zmluva.",
+        "Napätie medzi USA a ZSSR po roku 1945."]},
+      {answer:"Kleopatra",hints:[
+        "Bola prvou panovníčkou svojej dynastie, ktorá sa naučila egyptsky, ostatní hovorili len po grécky.",
+        "Do Ríma sa vybrala za Caesarom a tam sa jej narodil syn.",
+        "Spojila sa s Markom Antoniom a v roku 31 pred n. l. prehrali námornú bitku pri Actiu.",
+        "Podľa tradície sa v roku 30 pred n. l. otrávila uštipnutím jedovatého hada.",
+        "Posledná egyptská kráľovná z dynastie Ptolemaiovcov."]}
+    ]},
+    {id:'astronomia',name:"Astronómia",q:[
+      {answer:"Saturn",hints:[
+        "Jeho priemerná hustota je menšia než hustota vody, takže by v dostatočne veľkej vani plával.",
+        "Na severnom póle má útvar v tvare šesťuholníka, široký viac než dve Zeme.",
+        "Sonda Cassini ho skúmala v rokoch 2004 až 2017 a skončila zámerným ponorom do jeho atmosféry.",
+        "Jeho najväčší mesiac Titan má hustú atmosféru a jazerá z metánu.",
+        "Planéta s výraznými prstencami."]},
+      {answer:"Slnko",hints:[
+        "Z jeho jadra trvá svetlu cesta na povrch desaťtisíce rokov, kým odtiaľ k Zemi letí len osem minút.",
+        "Približne každých jedenásť rokov sa mení počet škvŕn na jeho povrchu, čo súvisí s obratom magnetického poľa.",
+        "Tvorí takmer 99,9 % hmotnosti celej našej planetárnej sústavy.",
+        "Povrchová teplota je okolo 5 500 °C a jadro má okolo 15 miliónov stupňov.",
+        "Hviezda, okolo ktorej obieha Zem."]},
+      {answer:"Mliečna dráha",hints:[
+        "Naša poloha je asi 26 000 svetelných rokov od jej stredu, v ramene Orióna.",
+        "V jej strede sa nachádza supermasívna čierna diera označená Sagittarius A*.",
+        "Za približne štyri a pol miliardy rokov sa ocitne v zrážke s najväčšou susednou galaxiou v Andromede.",
+        "Na tmavej oblohe vidno jej pás ako slabý svetelný oblúk hviezd.",
+        "Galaxia, v ktorej leží Slnko a Zem."]},
+      {answer:"Hubblov ďalekohľad",hints:[
+        "Po vypustení v roku 1990 mal hlavné zrkadlo ploché na okrajoch o približne dva mikrometre, opravila ho misia v roku 1993.",
+        "Obieha vo výške asi 540 km a jeden obeh okolo Zeme mu trvá približne 95 minút.",
+        "Meno nesie po astronómovi, ktorý v 20. rokoch dokázal, že existujú galaxie mimo našej.",
+        "Jeho infračervený nástupca nesie meno riaditeľa NASA z 60. rokov.",
+        "Slávne observatórium obiehajúce nad atmosférou, ktoré urobilo snímky hlbokého vesmíru."]},
+      {answer:"Pluto",hints:[
+        "Meno mu v roku 1930 navrhla jedenásťročná anglická školáčka Venetia Burneyová.",
+        "Obeh okolo Slnka mu trvá približne 248 rokov.",
+        "V roku 2006 ho Medzinárodná astronomická únia preradila medzi trpasličie planéty.",
+        "Má päť známych mesiacov a najväčší z nich je takmer polovičný.",
+        "Bývalá deviata planéta, pri ktorej v roku 2015 preletela sonda New Horizons."]}
+    ]},
+    {id:'naj',name:"Svetové naj",q:[
+      {answer:"Bajkal",hints:[
+        "Žije v ňom jeden z mála sladkovodných druhov tuleňov na svete.",
+        "Obsahuje približne pätinu sladkej vody na povrchu planéty, ktorá nie je zamrznutá.",
+        "Vzniklo pred asi 25 miliónmi rokov v zlomovej trhline a je najstarším jazerom na svete.",
+        "Dosahuje hĺbku až 1 642 metrov.",
+        "Najhlbšie jazero sveta, leží na Sibíri."]},
+      {answer:"Mariánska priekopa",hints:[
+        "Jej najhlbšie miesto prvýkrát v roku 1960 dosiahli Jacques Piccard a Don Walsh v batyskafe Trieste.",
+        "V roku 2012 sa na dno ponoril aj režisér James Cameron sám v ponorke.",
+        "Vznikla tam, kde sa Tichomorská platňa podsúva pod susednú platňu.",
+        "Najvyššia hora sveta by sa do nej celá schovala.",
+        "Najhlbšie miesto oceánov, leží v Tichom oceáne pri ostrove Guam."]},
+      {answer:"Antarktída",hints:[
+        "Hoci patrí k najsuchším miestam, v podobe ľadu skrýva približne 70 % sladkej vody sveta.",
+        "Na stanici Vostok tu namerali najnižšiu teplotu na Zemi, asi −89 °C.",
+        "Medzinárodná zmluva z roku 1959 zakazuje na nej vojenskú činnosť a vyhlasuje ju za oblasť vedy.",
+        "Žijú tu cisárske tučniaky.",
+        "Kontinent okolo južného pólu."]},
+      {answer:"Veľká bariérová rifa",hints:[
+        "Je to najväčšia štruktúra na svete vytvorená živými organizmami a vidno ju z vesmíru.",
+        "Tvorí ju vyše 2 900 jednotlivých útesov a asi 900 ostrovov.",
+        "V posledných rokoch ju postihli hromadné vyblednutia koralov.",
+        "Leží pri severovýchodnom pobreží štátu Queensland.",
+        "Obrovský koralový útes pri Austrálii, ktorý je zapísaný v zozname UNESCO."]},
+      {answer:"Angelov vodopád",hints:[
+        "Svetu ho v roku 1933 ukázal americký pilot, ktorý pri lete nad džungľou hľadal ložisko zlata.",
+        "Padá z plochého vrcholu stolovej hory, ktorú domorodci nazývajú tepuí.",
+        "Voda padá tak dlho, že sa pred dopadom mení na hmlu.",
+        "Je vysoký 979 metrov, z toho vodný stĺp padá bez dotyku skaly 807 metrov.",
+        "Najvyšší padajúci vodný tok sveta vo Venezuele."]}
+    ]},
+    {id:'filmy',name:"Filmové hviezdy",q:[
+      {answer:"Marilyn Monroe",hints:[
+        "Narodila sa pod menom Norma Jeane Mortenson a časť detstva strávila v pestúnskych rodinách.",
+        "Počas vojny pracovala v továrni na lietadlá, kde ju v roku 1945 odfotil armádny fotograf.",
+        "V roku 1962 spievala prezidentovi Kennedymu k narodeninám v Madison Square Garden.",
+        "Slávna je scéna v bielych šatách nad vetracím otvorom metra vo filme Sedem rokov svrbenia.",
+        "Americká herečka, blondínka, ktorá zomrela v roku 1962."]},
+      {answer:"Morgan Freeman",hints:[
+        "Na svojom ranči v Mississippi chová včely.",
+        "Oscara za vedľajšiu rolu získal za film Million Dollar Baby.",
+        "Zahral si Boha vo filme Bruce Všemohúci.",
+        "Hral väzňa Redda vo Vykúpení z väznice Shawshank.",
+        "Americký herec s hlbokým hlasom, často ako rozprávač dokumentov."]},
+      {answer:"Robert De Niro",hints:[
+        "Pre rolu v Zúrivom býkovi pribral približne 27 kilogramov.",
+        "Spoluzaložil filmový festival v newyorskej štvrti Tribeca po útokoch z 11. septembra.",
+        "Hral mladého Vita Corleoneho v Krstnom otcovi II a získal Oscara za vedľajšiu rolu.",
+        "S režisérom Martinom Scorsesem natočil Taxikára.",
+        "Americký herec, ktorý povedal vetu „You talkin’ to me?“"]},
+      {answer:"Sean Connery",hints:[
+        "Pred hereckou kariérou pracoval ako roznášač mlieka a leštič rakiev.",
+        "Oscara za vedľajšiu rolu získal v roku 1988 vo filme Neúplatní.",
+        "Na ruke mal vytetované „Scotland Forever“ a „Mum and Dad“.",
+        "Prvý filmový predstaviteľ agenta 007 vo filme Dr. No.",
+        "Škótsky herec, prvý filmový James Bond."]},
+      {answer:"Jim Carrey",hints:[
+        "Ako tínedžer pracoval s rodinou ako upratovač v továrni na pneumatiky.",
+        "V roku 1990 sa preslávil v televíznom skeči In Living Color.",
+        "Za rolu v Šou Trumana získal Zlatý glóbus.",
+        "V roku 1994 hral v filmoch Ace Ventura a Maska.",
+        "Kanadský herec, ktorý vyniká v grimasách."]}
+    ]},
+    {id:'priroda',name:"Príroda a veda",q:[
+      {answer:"Penicilín",hints:[
+        "Objavil sa náhodou v septembri 1928, keď sa po návrate z dovolenky na zabudnutej miske objavila plesnivina.",
+        "Prvým pacientom liečeným čistou formou bol v roku 1941 policajt Albert Alexander, ktorý nakoniec zomrel, lebo zásoby došli.",
+        "Za objav získali Nobelovu cenu v roku 1945 Fleming, Florey a Chain.",
+        "Používa sa proti bakteriálnym infekciám, ale nie proti vírusom.",
+        "Prvé antibiotikum, ktoré vzniklo z plesne."]},
+      {answer:"Sopka",hints:[
+        "Najväčšie výbuchy v ľudskej histórii, ako ten v roku 1815 v Indonézii, spôsobili rok bez leta.",
+        "V roku 79 n. l. zasypala popolom mestá Pompeje a Herculaneum.",
+        "Má kráter, z ktorého vychádza magma, a po vyliatí ju nazývame láva.",
+        "Najaktívnejšie sú v Ohnivom kruhu okolo Tichého oceánu.",
+        "Hora, z ktorej vyteká láva."]},
+      {answer:"Mravec",hints:[
+        "Hmotnosť všetkých jedincov tohto hmyzu je podľa niektorých odhadov porovnateľná s celkovou hmotnosťou ľudstva.",
+        "Niektoré druhy pestujú huby na listoch, ktoré prinesú do hniezda.",
+        "Žije v kolónii, v ktorej kráľovná znáša vajíčka a robotnice vykonávajú ostatnú prácu.",
+        "Komunikuje pomocou chemických látok zvaných feromóny.",
+        "Malý hmyz žijúci v kolónii, symbol usilovnosti."]},
+      {answer:"Periodická tabuľka",hints:[
+        "Pri jej zostavovaní v roku 1869 nechal ruský chemik prázdne miesta a predpovedal vlastnosti prvkov, ktoré ešte neboli objavené.",
+        "V súčasnosti obsahuje 118 potvrdených prvkov.",
+        "Prvky sú v nej usporiadané podľa rastúceho protónového čísla.",
+        "Zlato má v nej značku Au a striebro Ag.",
+        "Nájdeš ju v každej chemickej učebni na stene."]},
+      {answer:"Blesk",hints:[
+        "Počas výboja sa vzduch v kanáli zahreje na približne 30 000 °C, päťkrát viac ako je povrch Slnka.",
+        "Na Zemi ich vznikne približne 40 až 50 každú sekundu.",
+        "Zvuk, ktorý ho sprevádza, vzniká rýchlym rozpínaním zohriateho vzduchu.",
+        "Každé tri sekundy medzi zbadaním svetla a zvukom zodpovedajú približne jednému kilometru vzdialenosti.",
+        "Svetelný výboj z búrkového mraku."]}
+    ]}
+  ];
+  var PER_CAT=5;
+  var TOTAL=CATS.reduce(function(n,c){return n+c.q.length;},0);
+
+  var S={screen:'setup',names:['',''],players:[],cur:0,done:{},active:null,confirmNew:false};
+  var app=document.getElementById('app');
+
+  function load(){
+    try{
+      var r=localStorage.getItem(KEY);
+      if(!r)return;
+      var d=JSON.parse(r);
+      if(d&&d.players&&d.players.length){S.screen='board';S.players=d.players;S.cur=d.cur||0;S.done=d.done||{};}
+    }catch(e){}
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify({players:S.players,cur:S.cur,done:S.done}));}catch(e){}}
+  function wipe(){try{localStorage.removeItem(KEY);}catch(e){}}
+
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function ladderHtml(a,cls){
+    return '<ol class="ladder'+(cls?' '+cls:'')+'" aria-label="Body za nápovedu">'+LADDER.map(function(v,i){
+      var c='';
+      if(a){c=(a.status==='failed'||i<a.hint)?'past':(i===a.hint?'cur':'');}
+      return '<li class="'+c+'">'+v+'</li>';
+    }).join('')+'</ol>';
+  }
+
+  /* ---------- views ---------- */
+  function setupView(){
+    var rows=S.names.map(function(n,i){
+      return '<li><label class="sr" for="p'+i+'">Meno hráča '+(i+1)+'</label>'+
+        '<input id="p'+i+'" data-i="'+i+'" type="text" maxlength="20" placeholder="Hráč '+(i+1)+'" value="'+esc(n)+'" autocomplete="off">'+
+        (S.names.length>1?'<button type="button" class="btn small" data-act="rm" data-i="'+i+'" aria-label="Odstrániť hráča '+(i+1)+'">Odstrániť</button>':'')+
+        '</li>';
+    }).join('');
+    return '<main class="setup">'+
+      '<p class="kicker">Kvíz pre 1 až 4 hráčov</p>'+
+      '<h1>Päť nápovedí</h1>'+
+      '<p class="lede">Vyber si tému a hádajte, čo sa skrýva za nápovedami. Prvá je najťažšia a stojí 100 bodov. Pri každej ďalšej je odpoveď ľahšia a o 20 bodov lacnejšia. Kto tipne nesprávne, na tej otázke končí bez bodov. Hru ovláda moderátor.</p>'+
+      ladderHtml(null,'big')+
+      '<ul class="plist">'+rows+'</ul>'+
+      '<div class="actions">'+
+        (S.names.length<4?'<button type="button" class="btn" data-act="add" id="addBtn">Pridať hráča</button>':'')+
+        '<button type="button" class="btn primary" data-act="start" id="startBtn">Začať hru</button>'+
+      '</div>'+
+    '</main>';
+  }
+
+  function tileHtml(c,i){
+    var k=c.id+'-'+i,q=c.q[i];
+    if(k in S.done){
+      var v=S.done[k];
+      return '<button class="tile done'+(v?'':' zero')+'" disabled aria-label="'+esc(c.name)+', otázka '+(i+1)+', získané body: '+v+'">'+v+'</button>';
+    }
+    if(!q)return '<button class="tile empty" disabled aria-label="'+esc(c.name)+', otázka '+(i+1)+' ešte nie je pripravená">–</button>';
+    return '<button class="tile" data-act="open" data-cat="'+c.id+'" data-idx="'+i+'" aria-label="'+esc(c.name)+', otázka '+(i+1)+'">'+(i+1)+'</button>';
+  }
+
+  function boardView(){
+    var doneCount=Object.keys(S.done).length;
+    var finished=doneCount>=TOTAL;
+    var players=S.players.map(function(p,i){
+      var on=(i===S.cur&&!finished);
+      return '<li class="player'+(on?' on':'')+'"><span class="pn">'+esc(p.name)+'</span><span class="ps">'+p.score+'</span>'+(on&&S.players.length>1?'<span class="turn">na ťahu</span>':'')+'</li>';
+    }).join('');
+    var rows=CATS.map(function(c){
+      var left=c.q.filter(function(_,i){return !((c.id+'-'+i) in S.done);}).length;
+      var tiles='';
+      for(var i=0;i<PER_CAT;i++)tiles+=tileHtml(c,i);
+      return '<div class="row"><div class="cat">'+esc(c.name)+'<small>'+'zostáva '+left+' z '+c.q.length+'</small></div>'+tiles+'</div>';
+    }).join('');
+    var best=Math.max.apply(null,S.players.map(function(p){return p.score;}));
+    var winners=S.players.filter(function(p){return p.score===best;}).map(function(p){return esc(p.name);});
+    var end=finished?
+      '<section class="final"><h2>Koniec hry</h2><p>'+(S.players.length>1?(winners.length>1?'Remíza: '+winners.join(', ')+' ('+best+' b).':'Víťaz: '+winners[0]+' ('+best+' b).'):'Získané body: '+best+'.')+'</p><button class="btn primary" data-act="newgame">Hrať znova</button></section>':'';
+    var status=finished?'':'<p class="status">'+(S.players.length>1?'Na ťahu je <strong>'+esc(S.players[S.cur].name)+'</strong>. ':'')+'Vyber si tému a číslo otázky.</p>';
+    return '<main>'+
+      '<div class="top"><h1>Päť nápovedí</h1>'+
+      '<button class="btn small" data-act="newgame">'+(S.confirmNew?'Naozaj? Klikni znova':'Nová hra')+'</button></div>'+
+      '<ul class="players" aria-label="Skóre">'+players+'</ul>'+
+      end+status+
+      '<div class="board" role="group" aria-label="Tabuľa otázok">'+rows+'</div>'+
+    '</main>';
+  }
+
+  function questionView(){
+    var a=S.active,c=CATS.filter(function(x){return x.id===a.cat;})[0],q=c.q[a.idx],pl=S.players[S.cur];
+    var over=a.status!=='playing';
+    var shown=over?5:a.hint+1;
+    var hints='';
+    for(var i=0;i<shown;i++){
+      var cls=(!over&&i===a.hint)?'new':(over&&i>a.hint?'rest':'');
+      if(a.status==='failed')cls='';
+      hints+='<li class="hint '+cls+'"><span class="pts">'+LADDER[i]+' b</span><p>'+esc(q.hints[i])+'</p></li>';
+    }
+    var body;
+    if(!over&&!a.revealed){
+      var last=a.hint>=4;
+      body=
+        '<div class="actions">'+
+          '<button type="button" class="btn primary" id="revealBtn" data-act="reveal">Odkryť správnu odpoveď</button>'+
+          '<button type="button" class="btn ghost" data-act="skip">'+(last?'Nikto nevie, ukončiť otázku':'Neviem, ďalšia nápoveda ('+LADDER[a.hint+1]+' b)')+'</button>'+
+        '</div>';
+    }else if(!over){
+      body=
+        '<section class="result">'+
+          '<p class="kicker">Správna odpoveď</p>'+
+          '<h2>'+esc(q.answer)+'</h2>'+
+          '<p>Uhádol '+esc(pl.name)+'?</p>'+
+          '<div class="actions">'+
+            '<button type="button" class="btn primary" data-act="right">Správne (+'+LADDER[a.hint]+' b)</button>'+
+            '<button type="button" class="btn" data-act="wrong">Nesprávne (0 b)</button>'+
+          '</div>'+
+        '</section>';
+    }else{
+      var ok=a.status==='solved';
+      body=
+        '<section class="result '+a.status+'">'+
+          '<p class="kicker'+(ok?' ok':'')+'">'+(ok?'Správne':'Bez bodov')+'</p>'+
+          '<h2>'+esc(q.answer)+'</h2>'+
+          '<p>'+(ok?esc(pl.name)+' získava '+LADDER[a.hint]+' b.':esc(pl.name)+' tentoraz nezískava žiadne body.')+'</p>'+
+          '<button class="btn primary" data-act="back" id="backBtn">Späť na tabuľu</button>'+
+        '</section>';
+    }
+    var worth=over?(a.status==='solved'?LADDER[a.hint]:0):LADDER[a.hint];
+    return '<main class="qwrap">'+
+      '<div class="qhead"><span>'+esc(c.name)+' · otázka '+(a.idx+1)+'</span><span>Hrá: <strong>'+esc(pl.name)+'</strong></span></div>'+
+      '<div class="worth"><span class="pts" aria-label="'+worth+' bodov">'+worth+'</span><span class="unit">b</span></div>'+
+      ladderHtml(a)+
+      '<ol class="hints" aria-label="Nápovedy">'+hints+'</ol>'+
+      body+
+    '</main>';
+  }
+
+  function render(){
+    app.innerHTML=S.screen==='setup'?setupView():(S.active?questionView():boardView());
+    window.scrollTo(0,0);
+    var el=null;
+    if(S.active){el=document.getElementById(S.active.status!=='playing'?'backBtn':(S.active.revealed?null:'revealBtn'));}
+    if(el){try{el.focus({preventScroll:true});}catch(e){}}
+  }
+
+  /* ---------- game logic ---------- */
+  function resolve(status){
+    var a=S.active,key=a.cat+'-'+a.idx;
+    a.status=status;
+    var pts=status==='solved'?LADDER[a.hint]:0;
+    S.done[key]=pts;
+    S.players[S.cur].score+=pts;
+    save();
+  }
+  function nextHint(){
+    var a=S.active;
+    if(a.hint<4){a.hint++;}
+    else{resolve('failed');}
+  }
+
+  app.addEventListener('input',function(e){
+    var i=e.target.getAttribute&&e.target.getAttribute('data-i');
+    if(i!==null&&e.target.tagName==='INPUT'){S.names[+i]=e.target.value;}
+  });
+
+  app.addEventListener('click',function(e){
+    var b=e.target.closest('[data-act]');
+    if(!b)return;
+    var act=b.getAttribute('data-act');
+    if(act!=='newgame')S.confirmNew=false;
+    if(act==='add'){
+      if(S.names.length<4){S.names.push('');render();var el=document.getElementById('p'+(S.names.length-1));if(el)el.focus();}
+    }else if(act==='rm'){
+      S.names.splice(+b.getAttribute('data-i'),1);render();
+    }else if(act==='start'){
+      S.players=S.names.map(function(n,i){return {name:(n.trim()||('Hráč '+(i+1))),score:0};});
+      S.cur=0;S.done={};S.active=null;S.screen='board';save();render();
+    }else if(act==='open'){
+      S.active={cat:b.getAttribute('data-cat'),idx:+b.getAttribute('data-idx'),hint:0,status:'playing',revealed:false};
+      render();
+    }else if(act==='skip'){
+      nextHint();
+      render();
+    }else if(act==='reveal'){
+      S.active.revealed=true;render();
+    }else if(act==='right'){
+      resolve('solved');render();
+    }else if(act==='wrong'){
+      resolve('failed');render();
+    }else if(act==='back'){
+      S.active=null;S.cur=(S.cur+1)%S.players.length;save();render();
+    }else if(act==='newgame'){
+      var finished=Object.keys(S.done).length>=TOTAL;
+      if(S.confirmNew||finished){
+        wipe();S.screen='setup';S.names=S.players.map(function(p){return p.name;});S.players=[];S.done={};S.cur=0;S.active=null;S.confirmNew=false;render();
+      }else{S.confirmNew=true;render();}
+    }
+  });
+
+  load();
+  render();
+})();
+</script>
+
+</body>
+</html>
