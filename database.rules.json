@@ -1,0 +1,53 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "bank": {
+      ".read": "auth != null && auth.uid === 'DQYCtOaUiUeMiA9ZuDou79YKwGz1'",
+      ".write": "auth != null && auth.uid === 'DQYCtOaUiUeMiA9ZuDou79YKwGz1'"
+    },
+
+    "meta": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.uid === 'DQYCtOaUiUeMiA9ZuDou79YKwGz1'"
+    },
+
+    "game": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.uid === 'DQYCtOaUiUeMiA9ZuDou79YKwGz1'"
+    },
+
+    "players": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.uid === 'DQYCtOaUiUeMiA9ZuDou79YKwGz1'",
+      "$uid": {
+        "name": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20"
+        },
+        "online": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isBoolean()"
+        },
+        "score": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": { ".validate": false }
+      }
+    },
+
+    "answers": {
+      ".read": "auth != null && auth.uid === 'DQYCtOaUiUeMiA9ZuDou79YKwGz1'",
+      ".write": "auth != null && auth.uid === 'DQYCtOaUiUeMiA9ZuDou79YKwGz1'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('game/phase').val() === 'question' && root.child('game/q/open').val() === true && newData.child('hint').val() === root.child('game/q/hintIndex').val() && now <= root.child('game/q/deadline').val() + 3000",
+        ".validate": "newData.hasChildren(['text', 'hint'])",
+        "text": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80" },
+        "hint": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

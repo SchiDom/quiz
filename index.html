@@ -121,539 +121,679 @@ h2{font-size:clamp(2rem,6vw,3rem);font-weight:900;margin:.1em 0 .2em;text-wrap:b
   .tile{height:50px}
   .hint{grid-template-columns:3.4rem minmax(0,1fr);gap:.6rem}
 }
+
+/* ---- online verzia ---- */
+.banner{margin:0 0 16px;padding:.6rem .9rem;border:1px dashed var(--line);border-radius:6px;color:var(--ink-2);font-size:.9rem}
+.who{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{padding:.25rem .7rem;border-radius:999px;background:var(--surface-2);font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;overflow-wrap:anywhere}
+.badge.mod{background:var(--accent);color:var(--on-accent)}
+.card{padding:1rem 1.2rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin-top:1rem}
+.card h2{font-size:1.9rem;margin:0 0 .4rem}
+.card p{margin:.3rem 0}
+.card.gold{border:2px solid var(--gold)}
+.card.ok{border:2px solid var(--good)}
+.mono{font-variant-numeric:tabular-nums}
+.field{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.2rem}
+.field input{flex:1 1 220px;min-width:0;padding:.8rem 1rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-size:1.05rem}
+.field input::placeholder{color:var(--ink-2)}
+.field.stack{flex-direction:column;max-width:380px}
+.field.stack input{flex:none}
+.timerrow{display:flex;align-items:center;gap:14px;margin-top:.6rem}
+.timer{flex:1;height:12px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.timer .bar{height:100%;width:100%;background:var(--gold)}
+.secs{font-family:var(--display);font-weight:900;font-size:2rem;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.locked{margin-top:1.2rem;padding:.9rem 1.1rem;border:2px solid var(--accent);border-radius:6px;background:var(--surface)}
+.locked small{display:block;color:var(--ink-2);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.75rem;margin-bottom:.2rem}
+.locked strong{font-size:1.25rem;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:.55rem}
+.chip{display:inline-flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.3rem .6rem;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);overflow-wrap:anywhere;min-width:0}
+.chip.ok{border:2px solid var(--good)}
+.chip.no{border:2px solid var(--bad)}
+.chip .mark{font-weight:700}
+.chip.ok .mark{color:var(--good)}
+.chip.no .mark{color:var(--bad)}
+.j{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:.15rem .55rem;font-weight:700;cursor:pointer}
+.j:hover{border-color:var(--accent)}
+.j.on-ok{background:var(--good);border-color:var(--good);color:var(--bg)}
+.j.on-no{background:var(--bad);border-color:var(--bad);color:var(--bg)}
+.tile.static{cursor:default}
+.tile.static:hover{border-color:var(--line);color:var(--ink)}
+.player.off{opacity:.55}
+.player .kick{margin-left:.2rem;border:0;background:transparent;color:inherit;cursor:pointer;font-size:1rem;padding:0 .2rem}
+.player.on .turn,.player .turn.got{opacity:1}
+.last{margin-top:1rem;padding:.8rem 1rem;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.last p{margin:.15rem 0}
+.tools{display:flex;flex-wrap:wrap;gap:10px;margin-top:1.6rem;align-items:center}
+.file{display:inline-block}
+.file input{max-width:100%}
+.linkbtn{border:0;background:transparent;color:var(--ink-2);text-decoration:underline;cursor:pointer;padding:.4rem 0;font-size:.9rem}
+.foot{margin-top:2rem}
+.err{color:var(--bad);font-weight:600;margin:.6rem 0 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:min(92vw,520px);padding:.7rem 1rem;border-radius:6px;background:var(--ink);color:var(--bg);font-weight:600;z-index:20;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.dim{color:var(--ink-2)}
+.hint{grid-template-columns:5.2rem minmax(0,1fr)}
+.hint .pts{white-space:nowrap}
+.hint .body{min-width:0}
+@media (max-width:620px){.secs{font-size:1.6rem}.hint{grid-template-columns:4.4rem minmax(0,1fr)}}
 </style>
 </head>
 <body>
 <div id="app"></div>
-
+<noscript>Táto hra potrebuje zapnutý JavaScript.</noscript>
+<script src="firebase-config.js"></script>
 <script>
-(function(){
-  var LADDER=[100,80,60,40,20];
-  var KEY='pat-napovedi-v1';
+(() => {
+'use strict';
 
-  /* Otázky: hints[0] je najťažšia (100 b), hints[4] najľahšia (20 b).
-     Každá téma má 5 miest, nevyplnené miesta sa na tabuli zobrazia ako „–“. */
-  var CATS=[
-    {id:'geografia',name:"Geografia",q:[
-      {answer:"Grónsko",hints:[
-        "Patrí medzi najredšie osídlené územia sveta, na jedného človeka tu pripadá zhruba sedem štvorcových kilometrov.",
-        "V roku 1985 ako prvé územie opustilo predchodcu dnešnej Európskej únie, hoci k nemu pristúpilo ešte ako súčasť iného štátu.",
-        "Hlavné mesto Nuuk leží na juhozápadnom pobreží a žije v ňom takmer tretina obyvateľov.",
-        "Až približne osemdesiat percent jeho plochy pokrýva ľadový štít.",
-        "Najväčší ostrov sveta, ktorý patrí Dánsku."]},
-      {answer:"Mongolsko",hints:[
-        "Symbol na jeho vlajke, vytvorený v roku 1686 mníchom Zanabazarom, je zároveň písmenom starého písma.",
-        "Je druhým najväčším štátom sveta bez prístupu k moru.",
-        "Jeho hlavné mesto je najchladnejším národným hlavným mestom na svete a žije v ňom takmer polovica obyvateľov.",
-        "Na juhu leží púšť Gobi a časť ľudí tu dodnes žije v prenosných okrúhlych stanoch.",
-        "Krajina, z ktorej pochádzal Čingischán."]},
-      {answer:"Dunaj",hints:[
-        "Preteká alebo tvorí hranicu v desiatich štátoch, čo je rekord medzi riekami sveta.",
-        "Jeho pramenné ramená sa spájajú v nemeckom meste Donaueschingen.",
-        "Preteká štyrmi hlavnými mestami: Viedňou, Bratislavou, Budapešťou a Belehradom.",
-        "Valčík Johanna Straussa o jeho modrej farbe patrí k najznámejším skladbám sveta.",
-        "Druhá najdlhšia rieka Európy, preteká Bratislavou."]},
-      {answer:"Nový Zéland",hints:[
-        "Pred príchodom ľudí v 13. storočí tu neboli žiadne suchozemské cicavce okrem netopierov.",
-        "Jeho územie leží na hranici Tichomorskej a Indoaustrálskej tektonickej platne.",
-        "Maorovia ho nazývajú Aotearoa, čo sa prekladá ako „krajina dlhého bieleho oblaku“.",
-        "Natáčala sa tu filmová trilógia o Pánovi prsteňov.",
-        "Ostrovný štát oviec a vtákov kivi na južnej pologuli, neďaleko Austrálie."]},
-      {answer:"Madagaskar",hints:[
-        "Až približne deväťdesiat percent jeho voľne žijúcich druhov rastlín a živočíchov sa inde na svete nenachádza.",
-        "Od indickej pevniny sa oddelil pred zhruba 88 miliónmi rokov.",
-        "Jeho obyvatelia hovoria jazykom príbuzným s jazykmi z Indonézie.",
-        "Žijú tu lemury, ktoré inde v prírode nenájdeš.",
-        "Štvrtý najväčší ostrov sveta pri východnom pobreží Afriky."]}
-    ]},
-    {id:'sport',name:"Šport",q:[
-      {answer:"Usain Bolt",hints:[
-        "Stometrovú trať zvláda približne v 41 krokoch, menej než súperi, a pomalší štart si vynahrádza dĺžkou kroku.",
-        "V detstve hral kriket a futbal a k šprintu ho nasmeroval tréner kriketového tímu.",
-        "Na olympiáde v Pekingu 2008 spomalil tesne pred cieľom a aj tak vytvoril nový svetový rekord.",
-        "Svetový rekord na stometrovej trati, 9,58 s, drží od roku 2009 z Berlína.",
-        "Jamajský šprintér známy víťaznou pózou blesku."]},
-      {answer:"Muhammad Ali",hints:[
-        "Narodil sa pod menom, ktoré mal po otcovi aj po slávnom americkom abolicionistovi.",
-        "S boxom začal ako dvanásťročný, keď mu ukradli bicykel a policajt ho nasmeroval do telocvične.",
-        "Titul v ťažkej váhe stratil v roku 1967, keď odmietol nastúpiť na vojenskú službu vo Vietname.",
-        "Zápas s Georgeom Foremanom v roku 1974 v Zaire sa nazýva Rumble in the Jungle.",
-        "Boxer, ktorý hovoril, že lieta ako motýľ a štípe ako včela."]},
-      {answer:"Pelé",hints:[
-        "Prvé majstrovstvá sveta vyhral ako sedemnásťročný a vo finále strelil dva góly.",
-        "Oficiálne sa volal Edson Arantes do Nascimento a prezývku dostal v detstve v škole.",
-        "Ako jediný hráč vyhral tri majstrovstvá sveta.",
-        "Väčšinu kariéry strávil v klube Santos a nakoniec hral v americkom Cosmose.",
-        "Brazílsky futbalista, prezývaný Čierna perla."]},
-      {answer:"Zdeno Chára",hints:[
-        "V roku 2012 vytvoril vtedajší rekord v súťaži o najsilnejšiu strelu hviezdneho víkendu NHL.",
-        "Meria 206 centimetrov a patril k najvyšším hráčom v histórii NHL.",
-        "Stanleyho pohár ako kapitán Bostonu zdvihol v roku 2011.",
-        "Pochádza z Trenčína a dlhé roky hral za Boston Bruins.",
-        "Slovenský hokejový obranca, ktorý je medzi najlepšími v histórii."]},
-      {answer:"Super Bowl",hints:[
-        "Jeho názov údajne vymyslel vlastník klubu Lamar Hunt podľa skákacej loptičky, s ktorou sa hrali jeho deti.",
-        "Prvý ročník v januári 1967 sa pôvodne volal AFL–NFL World Championship Game.",
-        "Víťazná trofej nesie meno trénera Vincea Lombardiho.",
-        "Koná sa zvyčajne na začiatku februára a v prestávke na ňom vystupujú hudobné hviezdy.",
-        "Finále americkej ligy amerického futbalu NFL."]}
-    ]},
-    {id:'vseobecny',name:"Všeobecný prehľad",q:[
-      {answer:"Žiarovka",hints:[
-        "Najdlhšie nepretržite horiaci exemplár svieti v požiarnej stanici v kalifornskom Livermore od roku 1901.",
-        "Joseph Swan v Anglicku predviedol funkčnú verziu v roku 1878, takmer súčasne s Edisonom.",
-        "Vlákno je dnes väčšinou volfrámové, pôvodne bolo zuhoľnatené z bavlny či bambusu.",
-        "Postupne ju vytláčajú technológie so svetelnými diódami.",
-        "Symbol nápadu, ktorý komiksové postavy zvyknú mať nad hlavou."]},
-      {answer:"Bicykel",hints:[
-        "Jeho predchodca bez pedálov z roku 1817 sa poháňal odrážaním nohami od zeme a vynašiel ho Karl von Drais.",
-        "Retiazkový prevod na zadné koleso sa objavil v 80. rokoch 19. storočia.",
-        "John Dunlop zlepšil jeho pohodlie vynálezom nafukovacej pneumatiky v roku 1888.",
-        "Má dve kolesá, riadidlá a sedlo.",
-        "Dopravný prostriedok, ktorý poháňaš nohami pomocou pedálov."]},
-      {answer:"Zrkadlo",hints:[
-        "Najstaršie známe exempláre z leštenej sopečnej horniny, obsidiánu, pochádzajú z Anatólie spred približne 8 000 rokov.",
-        "V Benátkach 16. storočia sa vyrábalo na ostrove Murano a postup bol prísne strážený.",
-        "Moderný typ vznikol v roku 1835, keď sa sklo začalo pokrývať striebrom.",
-        "Používa sa pri holení, česaní a v autách, aby vodič videl dozadu.",
-        "Vidíš v ňom samého seba."]},
-      {answer:"Hodiny",hints:[
-        "Najstaršie dochované mechanické exempláre s krokovým mechanizmom pochádzajú z veží európskych katedrál zo 14. storočia a ciferník pôvodne nemali.",
-        "Kyvadlový typ vynašiel Christiaan Huygens v roku 1656.",
-        "Dnes sa najpresnejšie meria pomocou kmitov atómov cézia.",
-        "Majú ručičky, ktoré sa otáčajú po ciferníku.",
-        "Pomôcka, ktorá ukazuje čas."]},
-      {answer:"Dáždnik",hints:[
-        "Prvé zobrazenia pochádzajú z Mezopotámie a Egypta, kde spočiatku chránil pred slnkom a bol znakom moci.",
-        "Skladací kovový variant s teleskopickou tyčou patentoval Hans Haupt v roku 1928.",
-        "Rámik tvoria kovové rebrá, na ktorých je napnutá nepremokavá tkanina.",
-        "Má rúčku a otvára sa stlačením tlačidla alebo posunutím jazdca.",
-        "Chráni pred dažďom."]}
-    ]},
-    {id:'mesta',name:"Hlavné mestá",q:[
-      {answer:"Bern",hints:[
-        "Podľa tradície ho pri založení v roku 1191 pomenovali po zvere, ktorú Berthold V. ulovil ako prvú.",
-        "Jeho symbolom je veža z 13. storočia s astronomickými hodinami z 16. storočia.",
-        "Staré mesto je od roku 1983 zapísané v zozname UNESCO.",
-        "Oficiálne je to len „federálne mesto“, pretože ústava slovo hlavné mesto nepoužíva.",
-        "Hlavné mesto krajiny hodiniek a čokolády."]},
-      {answer:"Ankara",hints:[
-        "Dlho ho poznali pod menom odvodeným od plemena kôz, mačiek a králikov s dlhou jemnou srsťou.",
-        "Hlavným mestom sa stalo v roku 1923 a nahradilo Istanbul.",
-        "Stojí tu mauzóleum zakladateľa moderného štátu Mustafu Kemala Atatürka.",
-        "Leží na plošine vo výške približne 900 metrov nad morom.",
-        "Hlavné mesto krajiny, ktorej najväčším mestom je Istanbul."]},
-      {answer:"Wellington",hints:[
-        "Je najjužnejším hlavným mestom suverénneho štátu na svete.",
-        "Patrí k najveternejším mestám sveta.",
-        "Pomenovali ho po vojvodovi, ktorý zvíťazil pri Waterloo.",
-        "Leží na južnom cípe Severného ostrova.",
-        "Hlavné mesto štátu Aotearoa, ktorého najväčším mestom je Auckland."]},
-      {answer:"Nairobi",hints:[
-        "Jeho názov pochádza z masajského výrazu pre „miesto chladnej vody“.",
-        "Vzniklo v roku 1899 ako zásobovacia stanica pri stavbe železnice z Mombasy do Ugandy.",
-        "V jeho hraniciach leží národný park, v ktorom žijú levy a nosorožce.",
-        "Leží vo výške takmer 1 800 metrov, takže je tu mierne podnebie napriek blízkosti rovníka.",
-        "Hlavné mesto východoafrickej krajiny, odkiaľ pochádzajú slávni bežci na dlhé trate."]},
-      {answer:"Lima",hints:[
-        "Založil ho v januári 1535 Francisco Pizarro pod názvom Mesto kráľov.",
-        "Ročne tu spadne len okolo desať milimetrov zrážok, hoci leží pri oceáne.",
-        "Jeho historické centrum je zapísané v zozname UNESCO.",
-        "Leží na pobreží Tichého oceánu pod Andami.",
-        "Hlavné mesto krajiny, v ktorej sa nachádza Machu Picchu."]}
-    ]},
-    {id:'auta',name:"Autá",q:[
-      {answer:"Ford Model T",hints:[
-        "V rokoch 1914 až 1925 sa dodával len v jednej farbe, lebo práve tento lak schol najrýchlejšie.",
-        "Na prvej pohyblivej montážnej linke v roku 1913 sa čas zloženia skrátil z 12 hodín na približne 90 minút.",
-        "Vyrobilo sa ich vyše 15 miliónov kusov, čo bol dlho rekord.",
-        "Štvorvalcový motor mal výkon okolo 20 koní.",
-        "Masovo vyrábané americké auto, ktoré motorizovalo celé národy, prezývané Tin Lizzie."]},
-      {answer:"Mini",hints:[
-        "Jeho konštruktér Alec Issigonis dostal po suezskej kríze zadanie, aby sa doň zmestili štyria dospelí a aby málo spotrebovalo.",
-        "Motor je uložený priečne vpredu a prevodovka je v olejovej vani motora.",
-        "Kolesá sú posunuté do rohov karosérie a majú priemer len desať palcov.",
-        "V roku 1969 hralo vo filme Talianska robota a jazdilo po schodoch aj kanáloch.",
-        "Malé britské auto, dnes pod značkou BMW."]},
-      {answer:"Lamborghini",hints:[
-        "Zakladateľ vyrábal pôvodne traktory a podľa vlastných slov sa pohádal so slávnym zakladateľom konkurenčnej značky v Maranelle.",
-        "V znaku má rozzúreného býka, pretože zakladateľ sa narodil v znamení Býka.",
-        "Modely sa tradične pomenúvajú podľa slávnych býkov z koridy, napríklad Miura či Murciélago.",
-        "Sídli v mestečku Sant’Agata Bolognese.",
-        "Taliansky výrobca superšportov s býkom v logu, dnes patrí pod Audi."]},
-      {answer:"Toyota Prius",hints:[
-        "Prvá generácia z roku 1997 sa najskôr predávala len v Japonsku a jej meno pochádza z latinčiny a znamená „predchádzajúci“.",
-        "Spaľovací motor tu pracuje v Atkinsonovom cykle, ktorý je účinnejší, ale menej výkonný.",
-        "Brzdná energia sa premieňa na elektrickú a ukladá sa v batérii.",
-        "V Hollywoode ho obľúbili celebrity ako ekologické auto.",
-        "Prvý sériovo vyrábaný hybrid."]},
-      {answer:"Jeep",hints:[
-        "Pôvodný návrh pre armádu vznikol v roku 1940 v americkej firme Bantam za 49 dní.",
-        "Vo veľkých počtoch ho pre spojenecké armády vyrábali firmy Willys-Overland a Ford.",
-        "Názov vraj vznikol z výslovnosti skratky GP, čiže „general purpose“.",
-        "Jeho mriežka chladiča so siedmimi zvislými štrbinami je ochrannou známkou.",
-        "Terénne auto, ktoré preslávila druhá svetová vojna, dnes značka Wrangler."]}
-    ]},
-    {id:'historia',name:"História",q:[
-      {answer:"Francúzska revolúcia",hints:[
-        "Zlomovým bodom bola v lete 1789 takzvaná Veľká bázeň, keď sa na vidieku šírili zvesti o zbojníkoch a šľachtických sprisahaniach.",
-        "Zástupcovia tretieho stavu sa 20. júna 1789 v miestnosti s loptovou hrou zaprisahali, že sa nerozídu, kým krajina nebude mať ústavu.",
-        "Dňa 14. júla 1789 Parížania dobyli pevnosť Bastilu.",
-        "Heslom bolo Sloboda, rovnosť, bratstvo a symbolom gilotína.",
-        "Prevrat z konca 18. storočia, ktorý v krajine zvrhol kráľa Ľudovíta XVI."]},
-      {answer:"Krištof Kolumbus",hints:[
-        "Jeho výpočet obvodu Zeme bol výrazne menší než ten, ktorý poznali vtedajší učenci, preto tvrdil, že do Ázie je to blízko.",
-        "Prvú plavbu financovala kastílska kráľovná Izabela I. a vyplával z mesta Palos de la Frontera.",
-        "Prvú zem uzrel 12. októbra 1492 na ostrove, ktorý domorodci volali Guanahani.",
-        "Jeho tri lode sa volali Santa María, Pinta a Niña.",
-        "Taliansky moreplavec, ktorý v službách Španielska objavil Ameriku."]},
-      {answer:"Mária Terézia",hints:[
-        "Z jej šestnástich detí sa dospelosti dožilo desať, medzi nimi aj francúzska kráľovná, ktorú v roku 1793 popravili.",
-        "Na trón jej umožnil nastúpiť dedičský zákon z roku 1713, takzvaná Pragmatická sankcia.",
-        "V roku 1774 zaviedla povinnú školskú dochádzku.",
-        "Vládla štyridsať rokov, od roku 1740 do roku 1780.",
-        "Jediná žena, ktorá vládla Habsburskej monarchii."]},
-      {answer:"Studená vojna",hints:[
-        "Výraz sa prvýkrát objavil v roku 1945 v eseji spisovateľa Georgea Orwella.",
-        "V roku 1962 priviedla svet na hranicu jadrového konfliktu kríza okolo sovietskych rakiet na ostrove v Karibiku.",
-        "Súťaž sa niesla aj vo vesmíre, od prvého satelitu Sputnik po pristátie na Mesiaci.",
-        "Svet sa rozdelil na vojenské bloky NATO a Varšavská zmluva.",
-        "Napätie medzi USA a ZSSR po roku 1945."]},
-      {answer:"Kleopatra",hints:[
-        "Bola prvou panovníčkou svojej dynastie, ktorá sa naučila egyptsky, ostatní hovorili len po grécky.",
-        "Do Ríma sa vybrala za Caesarom a tam sa jej narodil syn.",
-        "Spojila sa s Markom Antoniom a v roku 31 pred n. l. prehrali námornú bitku pri Actiu.",
-        "Podľa tradície sa v roku 30 pred n. l. otrávila uštipnutím jedovatého hada.",
-        "Posledná egyptská kráľovná z dynastie Ptolemaiovcov."]}
-    ]},
-    {id:'astronomia',name:"Astronómia",q:[
-      {answer:"Saturn",hints:[
-        "Jeho priemerná hustota je menšia než hustota vody, takže by v dostatočne veľkej vani plával.",
-        "Na severnom póle má útvar v tvare šesťuholníka, široký viac než dve Zeme.",
-        "Sonda Cassini ho skúmala v rokoch 2004 až 2017 a skončila zámerným ponorom do jeho atmosféry.",
-        "Jeho najväčší mesiac Titan má hustú atmosféru a jazerá z metánu.",
-        "Planéta s výraznými prstencami."]},
-      {answer:"Slnko",hints:[
-        "Z jeho jadra trvá svetlu cesta na povrch desaťtisíce rokov, kým odtiaľ k Zemi letí len osem minút.",
-        "Približne každých jedenásť rokov sa mení počet škvŕn na jeho povrchu, čo súvisí s obratom magnetického poľa.",
-        "Tvorí takmer 99,9 % hmotnosti celej našej planetárnej sústavy.",
-        "Povrchová teplota je okolo 5 500 °C a jadro má okolo 15 miliónov stupňov.",
-        "Hviezda, okolo ktorej obieha Zem."]},
-      {answer:"Mliečna dráha",hints:[
-        "Naša poloha je asi 26 000 svetelných rokov od jej stredu, v ramene Orióna.",
-        "V jej strede sa nachádza supermasívna čierna diera označená Sagittarius A*.",
-        "Za približne štyri a pol miliardy rokov sa ocitne v zrážke s najväčšou susednou galaxiou v Andromede.",
-        "Na tmavej oblohe vidno jej pás ako slabý svetelný oblúk hviezd.",
-        "Galaxia, v ktorej leží Slnko a Zem."]},
-      {answer:"Hubblov ďalekohľad",hints:[
-        "Po vypustení v roku 1990 mal hlavné zrkadlo ploché na okrajoch o približne dva mikrometre, opravila ho misia v roku 1993.",
-        "Obieha vo výške asi 540 km a jeden obeh okolo Zeme mu trvá približne 95 minút.",
-        "Meno nesie po astronómovi, ktorý v 20. rokoch dokázal, že existujú galaxie mimo našej.",
-        "Jeho infračervený nástupca nesie meno riaditeľa NASA z 60. rokov.",
-        "Slávne observatórium obiehajúce nad atmosférou, ktoré urobilo snímky hlbokého vesmíru."]},
-      {answer:"Pluto",hints:[
-        "Meno mu v roku 1930 navrhla jedenásťročná anglická školáčka Venetia Burneyová.",
-        "Obeh okolo Slnka mu trvá približne 248 rokov.",
-        "V roku 2006 ho Medzinárodná astronomická únia preradila medzi trpasličie planéty.",
-        "Má päť známych mesiacov a najväčší z nich je takmer polovičný.",
-        "Bývalá deviata planéta, pri ktorej v roku 2015 preletela sonda New Horizons."]}
-    ]},
-    {id:'naj',name:"Svetové naj",q:[
-      {answer:"Bajkal",hints:[
-        "Žije v ňom jeden z mála sladkovodných druhov tuleňov na svete.",
-        "Obsahuje približne pätinu sladkej vody na povrchu planéty, ktorá nie je zamrznutá.",
-        "Vzniklo pred asi 25 miliónmi rokov v zlomovej trhline a je najstarším jazerom na svete.",
-        "Dosahuje hĺbku až 1 642 metrov.",
-        "Najhlbšie jazero sveta, leží na Sibíri."]},
-      {answer:"Mariánska priekopa",hints:[
-        "Jej najhlbšie miesto prvýkrát v roku 1960 dosiahli Jacques Piccard a Don Walsh v batyskafe Trieste.",
-        "V roku 2012 sa na dno ponoril aj režisér James Cameron sám v ponorke.",
-        "Vznikla tam, kde sa Tichomorská platňa podsúva pod susednú platňu.",
-        "Najvyššia hora sveta by sa do nej celá schovala.",
-        "Najhlbšie miesto oceánov, leží v Tichom oceáne pri ostrove Guam."]},
-      {answer:"Antarktída",hints:[
-        "Hoci patrí k najsuchším miestam, v podobe ľadu skrýva približne 70 % sladkej vody sveta.",
-        "Na stanici Vostok tu namerali najnižšiu teplotu na Zemi, asi −89 °C.",
-        "Medzinárodná zmluva z roku 1959 zakazuje na nej vojenskú činnosť a vyhlasuje ju za oblasť vedy.",
-        "Žijú tu cisárske tučniaky.",
-        "Kontinent okolo južného pólu."]},
-      {answer:"Veľká bariérová rifa",hints:[
-        "Je to najväčšia štruktúra na svete vytvorená živými organizmami a vidno ju z vesmíru.",
-        "Tvorí ju vyše 2 900 jednotlivých útesov a asi 900 ostrovov.",
-        "V posledných rokoch ju postihli hromadné vyblednutia koralov.",
-        "Leží pri severovýchodnom pobreží štátu Queensland.",
-        "Obrovský koralový útes pri Austrálii, ktorý je zapísaný v zozname UNESCO."]},
-      {answer:"Angelov vodopád",hints:[
-        "Svetu ho v roku 1933 ukázal americký pilot, ktorý pri lete nad džungľou hľadal ložisko zlata.",
-        "Padá z plochého vrcholu stolovej hory, ktorú domorodci nazývajú tepuí.",
-        "Voda padá tak dlho, že sa pred dopadom mení na hmlu.",
-        "Je vysoký 979 metrov, z toho vodný stĺp padá bez dotyku skaly 807 metrov.",
-        "Najvyšší padajúci vodný tok sveta vo Venezuele."]}
-    ]},
-    {id:'filmy',name:"Filmové hviezdy",q:[
-      {answer:"Marilyn Monroe",hints:[
-        "Narodila sa pod menom Norma Jeane Mortenson a časť detstva strávila v pestúnskych rodinách.",
-        "Počas vojny pracovala v továrni na lietadlá, kde ju v roku 1945 odfotil armádny fotograf.",
-        "V roku 1962 spievala prezidentovi Kennedymu k narodeninám v Madison Square Garden.",
-        "Slávna je scéna v bielych šatách nad vetracím otvorom metra vo filme Sedem rokov svrbenia.",
-        "Americká herečka, blondínka, ktorá zomrela v roku 1962."]},
-      {answer:"Morgan Freeman",hints:[
-        "Na svojom ranči v Mississippi chová včely.",
-        "Oscara za vedľajšiu rolu získal za film Million Dollar Baby.",
-        "Zahral si Boha vo filme Bruce Všemohúci.",
-        "Hral väzňa Redda vo Vykúpení z väznice Shawshank.",
-        "Americký herec s hlbokým hlasom, často ako rozprávač dokumentov."]},
-      {answer:"Robert De Niro",hints:[
-        "Pre rolu v Zúrivom býkovi pribral približne 27 kilogramov.",
-        "Spoluzaložil filmový festival v newyorskej štvrti Tribeca po útokoch z 11. septembra.",
-        "Hral mladého Vita Corleoneho v Krstnom otcovi II a získal Oscara za vedľajšiu rolu.",
-        "S režisérom Martinom Scorsesem natočil Taxikára.",
-        "Americký herec, ktorý povedal vetu „You talkin’ to me?“"]},
-      {answer:"Sean Connery",hints:[
-        "Pred hereckou kariérou pracoval ako roznášač mlieka a leštič rakiev.",
-        "Oscara za vedľajšiu rolu získal v roku 1988 vo filme Neúplatní.",
-        "Na ruke mal vytetované „Scotland Forever“ a „Mum and Dad“.",
-        "Prvý filmový predstaviteľ agenta 007 vo filme Dr. No.",
-        "Škótsky herec, prvý filmový James Bond."]},
-      {answer:"Jim Carrey",hints:[
-        "Ako tínedžer pracoval s rodinou ako upratovač v továrni na pneumatiky.",
-        "V roku 1990 sa preslávil v televíznom skeči In Living Color.",
-        "Za rolu v Šou Trumana získal Zlatý glóbus.",
-        "V roku 1994 hral v filmoch Ace Ventura a Maska.",
-        "Kanadský herec, ktorý vyniká v grimasách."]}
-    ]},
-    {id:'priroda',name:"Príroda a veda",q:[
-      {answer:"Penicilín",hints:[
-        "Objavil sa náhodou v septembri 1928, keď sa po návrate z dovolenky na zabudnutej miske objavila plesnivina.",
-        "Prvým pacientom liečeným čistou formou bol v roku 1941 policajt Albert Alexander, ktorý nakoniec zomrel, lebo zásoby došli.",
-        "Za objav získali Nobelovu cenu v roku 1945 Fleming, Florey a Chain.",
-        "Používa sa proti bakteriálnym infekciám, ale nie proti vírusom.",
-        "Prvé antibiotikum, ktoré vzniklo z plesne."]},
-      {answer:"Sopka",hints:[
-        "Najväčšie výbuchy v ľudskej histórii, ako ten v roku 1815 v Indonézii, spôsobili rok bez leta.",
-        "V roku 79 n. l. zasypala popolom mestá Pompeje a Herculaneum.",
-        "Má kráter, z ktorého vychádza magma, a po vyliatí ju nazývame láva.",
-        "Najaktívnejšie sú v Ohnivom kruhu okolo Tichého oceánu.",
-        "Hora, z ktorej vyteká láva."]},
-      {answer:"Mravec",hints:[
-        "Hmotnosť všetkých jedincov tohto hmyzu je podľa niektorých odhadov porovnateľná s celkovou hmotnosťou ľudstva.",
-        "Niektoré druhy pestujú huby na listoch, ktoré prinesú do hniezda.",
-        "Žije v kolónii, v ktorej kráľovná znáša vajíčka a robotnice vykonávajú ostatnú prácu.",
-        "Komunikuje pomocou chemických látok zvaných feromóny.",
-        "Malý hmyz žijúci v kolónii, symbol usilovnosti."]},
-      {answer:"Periodická tabuľka",hints:[
-        "Pri jej zostavovaní v roku 1869 nechal ruský chemik prázdne miesta a predpovedal vlastnosti prvkov, ktoré ešte neboli objavené.",
-        "V súčasnosti obsahuje 118 potvrdených prvkov.",
-        "Prvky sú v nej usporiadané podľa rastúceho protónového čísla.",
-        "Zlato má v nej značku Au a striebro Ag.",
-        "Nájdeš ju v každej chemickej učebni na stene."]},
-      {answer:"Blesk",hints:[
-        "Počas výboja sa vzduch v kanáli zahreje na približne 30 000 °C, päťkrát viac ako je povrch Slnka.",
-        "Na Zemi ich vznikne približne 40 až 50 každú sekundu.",
-        "Zvuk, ktorý ho sprevádza, vzniká rýchlym rozpínaním zohriateho vzduchu.",
-        "Každé tri sekundy medzi zbadaním svetla a zvukom zodpovedajú približne jednému kilometru vzdialenosti.",
-        "Svetelný výboj z búrkového mraku."]}
-    ]}
-  ];
-  var PER_CAT=5;
-  var TOTAL=CATS.reduce(function(n,c){return n+c.q.length;},0);
+const LADDER = [100, 80, 60, 40, 20];
+const HINT_MS = window.PN_HINT_MS || 15000;
+const GRACE = 700;
+const PER_CAT = 5;
+const CFG = window.FIREBASE_CONFIG;
+const DEMO = !(CFG && CFG.apiKey && CFG.databaseURL);
+const $app = document.getElementById('app');
+const $ = id => document.getElementById(id);
 
-  var S={screen:'setup',names:['',''],players:[],cur:0,done:{},active:null,confirmNew:false};
-  var app=document.getElementById('app');
-
-  function load(){
-    try{
-      var r=localStorage.getItem(KEY);
-      if(!r)return;
-      var d=JSON.parse(r);
-      if(d&&d.players&&d.players.length){S.screen='board';S.players=d.players;S.cur=d.cur||0;S.done=d.done||{};}
-    }catch(e){}
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toArr = v => {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.slice();
+  return Object.keys(v).sort((a, b) => a - b).map(k => v[k]);
+};
+function clean(v) {
+  if (v == null) return null;
+  if (Array.isArray(v)) {
+    const o = {}; let n = 0;
+    v.forEach((x, i) => { const c = clean(x); if (c != null) { o[i] = c; n++; } });
+    return n ? o : null;
   }
-  function save(){try{localStorage.setItem(KEY,JSON.stringify({players:S.players,cur:S.cur,done:S.done}));}catch(e){}}
-  function wipe(){try{localStorage.removeItem(KEY);}catch(e){}}
-
-  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function ladderHtml(a,cls){
-    return '<ol class="ladder'+(cls?' '+cls:'')+'" aria-label="Body za nápovedu">'+LADDER.map(function(v,i){
-      var c='';
-      if(a){c=(a.status==='failed'||i<a.hint)?'past':(i===a.hint?'cur':'');}
-      return '<li class="'+c+'">'+v+'</li>';
-    }).join('')+'</ol>';
+  if (typeof v === 'object') {
+    const o = {}; let n = 0;
+    Object.keys(v).forEach(k => { const c = clean(v[k]); if (c != null) { o[k] = c; n++; } });
+    return n ? o : null;
   }
+  return v;
+}
 
-  /* ---------- views ---------- */
-  function setupView(){
-    var rows=S.names.map(function(n,i){
-      return '<li><label class="sr" for="p'+i+'">Meno hráča '+(i+1)+'</label>'+
-        '<input id="p'+i+'" data-i="'+i+'" type="text" maxlength="20" placeholder="Hráč '+(i+1)+'" value="'+esc(n)+'" autocomplete="off">'+
-        (S.names.length>1?'<button type="button" class="btn small" data-act="rm" data-i="'+i+'" aria-label="Odstrániť hráča '+(i+1)+'">Odstrániť</button>':'')+
-        '</li>';
-    }).join('');
-    return '<main class="setup">'+
-      '<p class="kicker">Kvíz pre 1 až 4 hráčov</p>'+
-      '<h1>Päť nápovedí</h1>'+
-      '<p class="lede">Vyber si tému a hádajte, čo sa skrýva za nápovedami. Prvá je najťažšia a stojí 100 bodov. Pri každej ďalšej je odpoveď ľahšia a o 20 bodov lacnejšia. Kto tipne nesprávne, na tej otázke končí bez bodov. Hru ovláda moderátor.</p>'+
-      ladderHtml(null,'big')+
-      '<ul class="plist">'+rows+'</ul>'+
-      '<div class="actions">'+
-        (S.names.length<4?'<button type="button" class="btn" data-act="add" id="addBtn">Pridať hráča</button>':'')+
-        '<button type="button" class="btn primary" data-act="start" id="startBtn">Začať hru</button>'+
-      '</div>'+
-    '</main>';
-  }
-
-  function tileHtml(c,i){
-    var k=c.id+'-'+i,q=c.q[i];
-    if(k in S.done){
-      var v=S.done[k];
-      return '<button class="tile done'+(v?'':' zero')+'" disabled aria-label="'+esc(c.name)+', otázka '+(i+1)+', získané body: '+v+'">'+v+'</button>';
+/* ---------- úložisko: demo (len tento prehliadač) ---------- */
+function localDB() {
+  const KEY = 'pn-demo-db-v1';
+  let tree = {}, ls = [], ch = null; const disc = {};
+  try { ch = new BroadcastChannel('pn-demo-v1'); } catch (e) {}
+  const load = () => { try { tree = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { tree = {}; } };
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(tree)); } catch (e) {} };
+  const seg = p => p.split('/').filter(Boolean);
+  const getAt = p => {
+    let n = tree;
+    for (const s of seg(p)) { if (n == null || typeof n !== 'object') return null; n = n[s]; }
+    return n === undefined ? null : n;
+  };
+  const setAt = (p, v) => {
+    const s = seg(p);
+    if (!s.length) { tree = v == null ? {} : v; return; }
+    let n = tree; const stack = [];
+    for (let i = 0; i < s.length - 1; i++) {
+      if (n[s[i]] == null || typeof n[s[i]] !== 'object') { if (v == null) return; n[s[i]] = {}; }
+      stack.push([n, s[i]]); n = n[s[i]];
     }
-    if(!q)return '<button class="tile empty" disabled aria-label="'+esc(c.name)+', otázka '+(i+1)+' ešte nie je pripravená">–</button>';
-    return '<button class="tile" data-act="open" data-cat="'+c.id+'" data-idx="'+i+'" aria-label="'+esc(c.name)+', otázka '+(i+1)+'">'+(i+1)+'</button>';
-  }
-
-  function boardView(){
-    var doneCount=Object.keys(S.done).length;
-    var finished=doneCount>=TOTAL;
-    var players=S.players.map(function(p,i){
-      var on=(i===S.cur&&!finished);
-      return '<li class="player'+(on?' on':'')+'"><span class="pn">'+esc(p.name)+'</span><span class="ps">'+p.score+'</span>'+(on&&S.players.length>1?'<span class="turn">na ťahu</span>':'')+'</li>';
-    }).join('');
-    var rows=CATS.map(function(c){
-      var left=c.q.filter(function(_,i){return !((c.id+'-'+i) in S.done);}).length;
-      var tiles='';
-      for(var i=0;i<PER_CAT;i++)tiles+=tileHtml(c,i);
-      return '<div class="row"><div class="cat">'+esc(c.name)+'<small>'+'zostáva '+left+' z '+c.q.length+'</small></div>'+tiles+'</div>';
-    }).join('');
-    var best=Math.max.apply(null,S.players.map(function(p){return p.score;}));
-    var winners=S.players.filter(function(p){return p.score===best;}).map(function(p){return esc(p.name);});
-    var end=finished?
-      '<section class="final"><h2>Koniec hry</h2><p>'+(S.players.length>1?(winners.length>1?'Remíza: '+winners.join(', ')+' ('+best+' b).':'Víťaz: '+winners[0]+' ('+best+' b).'):'Získané body: '+best+'.')+'</p><button class="btn primary" data-act="newgame">Hrať znova</button></section>':'';
-    var status=finished?'':'<p class="status">'+(S.players.length>1?'Na ťahu je <strong>'+esc(S.players[S.cur].name)+'</strong>. ':'')+'Vyber si tému a číslo otázky.</p>';
-    return '<main>'+
-      '<div class="top"><h1>Päť nápovedí</h1>'+
-      '<button class="btn small" data-act="newgame">'+(S.confirmNew?'Naozaj? Klikni znova':'Nová hra')+'</button></div>'+
-      '<ul class="players" aria-label="Skóre">'+players+'</ul>'+
-      end+status+
-      '<div class="board" role="group" aria-label="Tabuľa otázok">'+rows+'</div>'+
-    '</main>';
-  }
-
-  function questionView(){
-    var a=S.active,c=CATS.filter(function(x){return x.id===a.cat;})[0],q=c.q[a.idx],pl=S.players[S.cur];
-    var over=a.status!=='playing';
-    var shown=over?5:a.hint+1;
-    var hints='';
-    for(var i=0;i<shown;i++){
-      var cls=(!over&&i===a.hint)?'new':(over&&i>a.hint?'rest':'');
-      if(a.status==='failed')cls='';
-      hints+='<li class="hint '+cls+'"><span class="pts">'+LADDER[i]+' b</span><p>'+esc(q.hints[i])+'</p></li>';
+    if (v == null) delete n[s[s.length - 1]]; else n[s[s.length - 1]] = v;
+    for (let j = stack.length - 1; j >= 0; j--) {
+      const [par, k] = stack[j];
+      if (par[k] && typeof par[k] === 'object' && !Object.keys(par[k]).length) delete par[k]; else break;
     }
-    var body;
-    if(!over&&!a.revealed){
-      var last=a.hint>=4;
-      body=
-        '<div class="actions">'+
-          '<button type="button" class="btn primary" id="revealBtn" data-act="reveal">Odkryť správnu odpoveď</button>'+
-          '<button type="button" class="btn ghost" data-act="skip">'+(last?'Nikto nevie, ukončiť otázku':'Neviem, ďalšia nápoveda ('+LADDER[a.hint+1]+' b)')+'</button>'+
-        '</div>';
-    }else if(!over){
-      body=
-        '<section class="result">'+
-          '<p class="kicker">Správna odpoveď</p>'+
-          '<h2>'+esc(q.answer)+'</h2>'+
-          '<p>Uhádol '+esc(pl.name)+'?</p>'+
-          '<div class="actions">'+
-            '<button type="button" class="btn primary" data-act="right">Správne (+'+LADDER[a.hint]+' b)</button>'+
-            '<button type="button" class="btn" data-act="wrong">Nesprávne (0 b)</button>'+
-          '</div>'+
-        '</section>';
-    }else{
-      var ok=a.status==='solved';
-      body=
-        '<section class="result '+a.status+'">'+
-          '<p class="kicker'+(ok?' ok':'')+'">'+(ok?'Správne':'Bez bodov')+'</p>'+
-          '<h2>'+esc(q.answer)+'</h2>'+
-          '<p>'+(ok?esc(pl.name)+' získava '+LADDER[a.hint]+' b.':esc(pl.name)+' tentoraz nezískava žiadne body.')+'</p>'+
-          '<button class="btn primary" data-act="back" id="backBtn">Späť na tabuľu</button>'+
-        '</section>';
-    }
-    var worth=over?(a.status==='solved'?LADDER[a.hint]:0):LADDER[a.hint];
-    return '<main class="qwrap">'+
-      '<div class="qhead"><span>'+esc(c.name)+' · otázka '+(a.idx+1)+'</span><span>Hrá: <strong>'+esc(pl.name)+'</strong></span></div>'+
-      '<div class="worth"><span class="pts" aria-label="'+worth+' bodov">'+worth+'</span><span class="unit">b</span></div>'+
-      ladderHtml(a)+
-      '<ol class="hints" aria-label="Nápovedy">'+hints+'</ol>'+
-      body+
-    '</main>';
-  }
-
-  function render(){
-    app.innerHTML=S.screen==='setup'?setupView():(S.active?questionView():boardView());
-    window.scrollTo(0,0);
-    var el=null;
-    if(S.active){el=document.getElementById(S.active.status!=='playing'?'backBtn':(S.active.revealed?null:'revealBtn'));}
-    if(el){try{el.focus({preventScroll:true});}catch(e){}}
-  }
-
-  /* ---------- game logic ---------- */
-  function resolve(status){
-    var a=S.active,key=a.cat+'-'+a.idx;
-    a.status=status;
-    var pts=status==='solved'?LADDER[a.hint]:0;
-    S.done[key]=pts;
-    S.players[S.cur].score+=pts;
-    save();
-  }
-  function nextHint(){
-    var a=S.active;
-    if(a.hint<4){a.hint++;}
-    else{resolve('failed');}
-  }
-
-  app.addEventListener('input',function(e){
-    var i=e.target.getAttribute&&e.target.getAttribute('data-i');
-    if(i!==null&&e.target.tagName==='INPUT'){S.names[+i]=e.target.value;}
+  };
+  const fire = () => ls.slice().forEach(l => {
+    const v = getAt(l.p), j = JSON.stringify(v);
+    if (j !== l.j) { l.j = j; l.cb(v == null ? null : JSON.parse(j)); }
   });
-
-  app.addEventListener('click',function(e){
-    var b=e.target.closest('[data-act]');
-    if(!b)return;
-    var act=b.getAttribute('data-act');
-    if(act!=='newgame')S.confirmNew=false;
-    if(act==='add'){
-      if(S.names.length<4){S.names.push('');render();var el=document.getElementById('p'+(S.names.length-1));if(el)el.focus();}
-    }else if(act==='rm'){
-      S.names.splice(+b.getAttribute('data-i'),1);render();
-    }else if(act==='start'){
-      S.players=S.names.map(function(n,i){return {name:(n.trim()||('Hráč '+(i+1))),score:0};});
-      S.cur=0;S.done={};S.active=null;S.screen='board';save();render();
-    }else if(act==='open'){
-      S.active={cat:b.getAttribute('data-cat'),idx:+b.getAttribute('data-idx'),hint:0,status:'playing',revealed:false};
-      render();
-    }else if(act==='skip'){
-      nextHint();
-      render();
-    }else if(act==='reveal'){
-      S.active.revealed=true;render();
-    }else if(act==='right'){
-      resolve('solved');render();
-    }else if(act==='wrong'){
-      resolve('failed');render();
-    }else if(act==='back'){
-      S.active=null;S.cur=(S.cur+1)%S.players.length;save();render();
-    }else if(act==='newgame'){
-      var finished=Object.keys(S.done).length>=TOTAL;
-      if(S.confirmNew||finished){
-        wipe();S.screen='setup';S.names=S.players.map(function(p){return p.name;});S.players=[];S.done={};S.cur=0;S.active=null;S.confirmNew=false;render();
-      }else{S.confirmNew=true;render();}
+  const sync = () => { load(); fire(); };
+  const commit = () => { save(); if (ch) ch.postMessage(1); fire(); };
+  if (ch) ch.onmessage = sync;
+  window.addEventListener('storage', e => { if (e.key === KEY) sync(); });
+  const self = {
+    demo: true, uid: null, isAnon: true,
+    init() {
+      load();
+      if (sessionStorage.getItem('pn-mod')) { self.uid = 'demo-mod'; self.isAnon = false; }
+      return Promise.resolve();
+    },
+    now: () => Date.now(),
+    signInAnon() {
+      let id = sessionStorage.getItem('pn-uid');
+      if (!id) { id = 'd' + Math.random().toString(36).slice(2, 10); sessionStorage.setItem('pn-uid', id); }
+      self.uid = id; self.isAnon = true; return Promise.resolve();
+    },
+    signInMod(email, pw) {
+      if (!pw) return Promise.reject(new Error('Zadaj heslo.'));
+      sessionStorage.setItem('pn-mod', '1'); self.uid = 'demo-mod'; self.isAnon = false; return Promise.resolve();
+    },
+    signOut() { sessionStorage.removeItem('pn-mod'); self.uid = null; self.isAnon = true; return Promise.resolve(); },
+    get(p) { load(); const v = getAt(p); return Promise.resolve(v == null ? null : JSON.parse(JSON.stringify(v))); },
+    set(p, v) { load(); setAt(p, clean(v)); commit(); return Promise.resolve(); },
+    update(m) { load(); Object.keys(m).forEach(p => setAt(p, clean(m[p]))); commit(); return Promise.resolve(); },
+    on(p, cb) {
+      const l = { p, cb, j: undefined };
+      ls.push(l);
+      setTimeout(() => {
+        if (p === '.info/connected') { l.j = 'true'; cb(true); return; }
+        load(); const v = getAt(p); l.j = JSON.stringify(v); cb(v == null ? null : JSON.parse(l.j));
+      }, 0);
+      return () => { ls = ls.filter(x => x !== l); };
+    },
+    onDisc(p, v) {
+      if (disc[p]) return; disc[p] = 1;
+      window.addEventListener('pagehide', () => { load(); setAt(p, v); save(); if (ch) ch.postMessage(1); });
     }
-  });
+  };
+  return self;
+}
 
-  load();
+/* ---------- úložisko: Firebase ---------- */
+function fbDB(cfg) {
+  const base = 'https://www.gstatic.com/firebasejs/10.14.1/';
+  let auth, db, off = 0;
+  const loadJS = src => new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error('Nepodarilo sa načítať knižnicu Firebase.'));
+    document.head.appendChild(s);
+  });
+  const self = {
+    demo: false, uid: null, isAnon: true,
+    setUser(u) { self.uid = u ? u.uid : null; self.isAnon = u ? u.isAnonymous : true; },
+    init() {
+      return loadJS(base + 'firebase-app-compat.js')
+        .then(() => Promise.all([loadJS(base + 'firebase-auth-compat.js'), loadJS(base + 'firebase-database-compat.js')]))
+        .then(() => {
+          firebase.initializeApp(cfg);
+          auth = firebase.auth(); db = firebase.database();
+          db.ref('.info/serverTimeOffset').on('value', s => { off = s.val() || 0; });
+          return new Promise(res => { const un = auth.onAuthStateChanged(u => { un(); res(u); }); });
+        })
+        .then(u => self.setUser(u));
+    },
+    now: () => Date.now() + off,
+    signInAnon() { return auth.signInAnonymously().then(c => self.setUser(c.user)); },
+    signInMod(e, p) { return auth.signInWithEmailAndPassword(e, p).then(c => self.setUser(c.user)); },
+    signOut() { return auth.signOut().then(() => self.setUser(null)); },
+    get(p) { return db.ref(p).once('value').then(s => s.val()); },
+    set(p, v) { return db.ref(p).set(clean(v)); },
+    update(m) { const o = {}; Object.keys(m).forEach(k => { o[k] = clean(m[k]); }); return db.ref().update(o); },
+    on(p, cb, errcb) {
+      const r = db.ref(p);
+      const h = r.on('value', s => cb(s.val()), e => { if (errcb) errcb(e); });
+      return () => r.off('value', h);
+    },
+    onDisc(p, v) { db.ref(p).onDisconnect().set(v); }
+  };
+  return self;
+}
+
+const DB = DEMO ? localDB() : fbDB(CFG);
+
+/* ---------- stav ---------- */
+const S = {
+  stage: 'boot', err: '', isMod: false, connected: false,
+  players: {}, game: {}, cats: [], myAns: null, ansAll: {}, bank: null,
+  inp: {}, loginOpen: false, loginErr: '', toast: '', confirmNew: false
+};
+let unsubs = [], busy = false, toastT = null, lastPres = 0;
+const G = () => S.game || {};
+const me = () => S.players[DB.uid] || null;
+
+function toast(msg) {
+  S.toast = msg; render();
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { S.toast = ''; render(); }, 4500);
+}
+function write(up, okMsg) {
+  busy = true;
+  return DB.update(up)
+    .then(() => { if (okMsg) toast(okMsg); })
+    .catch(e => toast('Zápis zlyhal: ' + (e && e.message || e)))
+    .then(() => { busy = false; });
+}
+function niceErr(e) {
+  const c = e && e.code || '';
+  if (/invalid-credential|wrong-password|user-not-found|invalid-email/.test(c)) return 'Nesprávny e-mail alebo heslo.';
+  if (c === 'auth/operation-not-allowed') return 'V konzole Firebase zapni prihlasovanie e-mailom a heslom.';
+  if (c === 'auth/too-many-requests') return 'Príliš veľa pokusov. Skús to o chvíľu.';
+  return (e && e.message) || String(e);
+}
+
+/* ---------- štart a prihlásenie ---------- */
+async function checkMod() {
+  try { await DB.get('bank'); S.isMod = true; } catch (e) { S.isMod = false; }
+}
+async function boot() {
   render();
+  try {
+    await DB.init();
+    if (!DB.uid) await DB.signInAnon();
+    if (!DB.isAnon) await checkMod();
+    S.stage = 'ready';
+    subscribe();
+    setInterval(tick, 250);
+  } catch (e) {
+    S.stage = 'error'; S.err = (e && e.message) || String(e);
+  }
+  render();
+}
+function subscribe() {
+  unsubs.forEach(f => f()); unsubs = [];
+  S.myAns = null; S.ansAll = {};
+  const onErr = e => { S.err = 'Chyba čítania z databázy: ' + (e && e.message || e); S.stage = 'error'; render(); };
+  unsubs.push(DB.on('players', v => { S.players = v || {}; ensureOnline(); render(); }, onErr));
+  unsubs.push(DB.on('game', v => { S.game = v || {}; render(); }, onErr));
+  unsubs.push(DB.on('meta/cats', v => { S.cats = toArr(v); render(); }, onErr));
+  unsubs.push(DB.on('.info/connected', v => { S.connected = v === true; ensureOnline(); }));
+  if (S.isMod) {
+    unsubs.push(DB.on('answers', v => { S.ansAll = v || {}; syncAnswered(); render(); }, onErr));
+    unsubs.push(DB.on('bank', v => { S.bank = v; render(); }, onErr));
+  } else {
+    unsubs.push(DB.on('answers/' + DB.uid, v => { S.myAns = v; render(); }, onErr));
+  }
+}
+function ensureOnline() {
+  if (S.isMod || !S.connected || !DB.uid) return;
+  const m = S.players[DB.uid];
+  if (m && m.name) {
+    DB.onDisc('players/' + DB.uid + '/online', false);
+    if (m.online !== true && Date.now() - lastPres > 3000) {
+      lastPres = Date.now();
+      DB.set('players/' + DB.uid + '/online', true).catch(() => {});
+    }
+  }
+}
+async function join() {
+  const name = (S.inp.nm || '').trim().slice(0, 20);
+  if (!name) { toast('Zadaj meno.'); return; }
+  try {
+    await DB.set('players/' + DB.uid + '/name', name);
+    await DB.set('players/' + DB.uid + '/online', true);
+    DB.onDisc('players/' + DB.uid + '/online', false);
+  } catch (e) { toast('Vstup do hry zlyhal: ' + (e && e.message || e)); }
+}
+async function modLogin() {
+  const em = (S.inp.em || '').trim(), pw = S.inp.pw || '';
+  S.loginErr = '';
+  try {
+    await DB.signInMod(em, pw);
+    await checkMod();
+    if (!S.isMod) {
+      await DB.signOut(); await DB.signInAnon();
+      throw new Error('Tento účet nie je moderátor.');
+    }
+    S.loginOpen = false; S.inp.pw = '';
+    subscribe();
+  } catch (e) { S.loginErr = niceErr(e); }
+  render();
+}
+async function modLogout() {
+  try { await DB.signOut(); await DB.signInAnon(); } catch (e) {}
+  S.isMod = false; S.bank = null; subscribe(); render();
+}
+
+/* ---------- moderátor: otázky ---------- */
+const slug = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'tema';
+async function uploadBank(file) {
+  try {
+    const j = JSON.parse(await file.text());
+    if (!j || !Array.isArray(j.cats) || !j.cats.length) throw new Error('V súbore chýba zoznam tém (cats).');
+    const bank = {}, meta = []; const seen = {}; let total = 0;
+    j.cats.forEach((c, ci) => {
+      if (!c.name || !Array.isArray(c.q)) throw new Error('Téma č. ' + (ci + 1) + ' nemá názov alebo otázky.');
+      let id = slug(c.id || c.name); while (seen[id]) id += '_'; seen[id] = 1;
+      const qs = c.q.slice(0, PER_CAT).map((q, qi) => {
+        if (!q.answer || !Array.isArray(q.hints) || q.hints.length !== 5 || q.hints.some(h => !h))
+          throw new Error('Otázka ' + (qi + 1) + ' v téme „' + c.name + '“ musí mať odpoveď a presne 5 nápovedí.');
+        return { answer: String(q.answer), hints: q.hints.map(String) };
+      });
+      total += qs.length;
+      bank[id] = { name: String(c.name), order: ci, q: qs };
+      meta.push({ id, name: String(c.name), n: qs.length });
+    });
+    await DB.update({ 'bank': { cats: bank }, 'meta/cats': meta });
+    toast('Otázky nahrané: ' + total + ' v ' + meta.length + ' témach.');
+  } catch (e) { toast('Súbor sa nepodarilo načítať: ' + (e && e.message || e)); }
+}
+function curQ() {
+  const q = G().q;
+  if (!q || !S.bank || !S.bank.cats) return null;
+  const c = S.bank.cats[q.cat];
+  const x = c && toArr(c.q)[q.n - 1];
+  return x ? { answer: x.answer, hints: toArr(x.hints) } : null;
+}
+function startQuestion(cat, idx) {
+  if (busy || !S.bank || !S.bank.cats[cat]) return;
+  const c = S.bank.cats[cat], x = toArr(c.q)[idx];
+  if (!x) return;
+  const hints = toArr(x.hints);
+  write({
+    'answers': null,
+    'game/reveal': null,
+    'game/last': null,
+    'game/phase': 'question',
+    'game/q': {
+      key: cat + '_' + idx, cat, n: idx + 1, catName: c.name, hintIndex: 0,
+      hints: [hints[0]], dur: HINT_MS, deadline: DB.now() + HINT_MS, open: true
+    }
+  });
+}
+function advance() {
+  const q = G().q, qd = curQ();
+  if (busy || !q || !qd) return;
+  const i = (q.hintIndex | 0) + 1;
+  write({
+    'game/q/hintIndex': i,
+    ['game/q/hints/' + i]: qd.hints[i],
+    'game/q/deadline': DB.now() + HINT_MS
+  });
+}
+function endRound() {
+  const q = G().q, qd = curQ();
+  if (busy || !q || !qd || G().phase !== 'question') return;
+  const ans = {};
+  Object.keys(S.ansAll || {}).forEach(u => {
+    const a = S.ansAll[u];
+    ans[u] = { name: (S.players[u] || {}).name || '?', text: a.text, hint: a.hint | 0 };
+  });
+  write({
+    'game/phase': 'reveal',
+    'game/q/open': false,
+    'game/reveal': { hints: qd.hints, answer: qd.answer, answers: ans }
+  });
+}
+function syncAnswered() {
+  const g = G();
+  if (!S.isMod || g.phase !== 'question' || !g.q) return;
+  const map = {}; Object.keys(S.ansAll || {}).forEach(u => { map[u] = true; });
+  const cur = g.q.answered || {};
+  if (JSON.stringify(Object.keys(map).sort()) !== JSON.stringify(Object.keys(cur).sort()))
+    DB.set('game/q/answered', Object.keys(map).length ? map : null).catch(() => {});
+}
+function judge(uid, v) {
+  const a = (G().reveal || {}).answers || {};
+  const next = a[uid] && a[uid].ok === v ? null : v;
+  DB.set('game/reveal/answers/' + uid + '/ok', next).catch(e => toast('Zápis zlyhal: ' + e.message));
+}
+function award() {
+  const g = G(), rv = g.reveal, q = g.q;
+  if (busy || !rv || !q) return;
+  const ans = rv.answers || {}, up = {}, results = {};
+  Object.keys(ans).forEach(u => {
+    const a = ans[u], pts = a.ok === true ? LADDER[a.hint] : 0;
+    results[u] = { name: a.name, pts, text: a.text };
+    if (pts) up['players/' + u + '/score'] = ((S.players[u] || {}).score || 0) + pts;
+  });
+  up['game/used/' + q.key] = true;
+  up['game/phase'] = 'board';
+  up['game/q'] = null;
+  up['game/reveal'] = null;
+  up['game/last'] = { cat: q.catName, answer: rv.answer, results };
+  up['answers'] = null;
+  write(up);
+}
+function cancelQuestion() {
+  write({ 'game/phase': 'board', 'game/q': null, 'game/reveal': null, 'answers': null });
+}
+function newGame() {
+  if (!S.confirmNew) { S.confirmNew = true; render(); return; }
+  S.confirmNew = false;
+  const up = { 'game': { phase: 'board' }, 'answers': null };
+  Object.keys(S.players).forEach(u => { up['players/' + u + '/score'] = 0; });
+  write(up, 'Nová hra začala.');
+}
+
+/* ---------- hráč: odpoveď ---------- */
+function submitAnswer() {
+  const q = G().q, t = (S.inp.ans || '').trim();
+  if (!q || S.myAns || !t) return;
+  if (DB.now() > q.deadline) { toast('Čas na túto nápovedu vypršal.'); return; }
+  const hint = q.hintIndex | 0;
+  S.inp.ans = '';
+  DB.set('answers/' + DB.uid, { text: t.slice(0, 80), hint })
+    .catch(() => toast('Odpoveď sa nepodarilo odoslať. Skús znova pri ďalšej nápovedi.'));
+}
+
+/* ---------- časovač a riadenie kola (len moderátor) ---------- */
+function tick() {
+  const g = G(), q = g.q;
+  if (g.phase === 'question' && q) {
+    const rem = Math.max(0, q.deadline - DB.now());
+    const bar = $('bar'); if (bar) bar.style.width = (rem / (q.dur || HINT_MS) * 100) + '%';
+    const s = $('secs'); if (s) s.textContent = Math.ceil(rem / 1000);
+    const b = $('ansBtn'); if (b) b.disabled = rem <= 0;
+  }
+  modLoop();
+}
+function modLoop() {
+  const g = G(), q = g.q;
+  if (!S.isMod || busy || g.phase !== 'question' || !q || !q.open || !curQ()) return;
+  const online = Object.keys(S.players).filter(u => S.players[u].name && S.players[u].online);
+  if (online.length && online.every(u => S.ansAll[u])) { endRound(); return; }
+  if (DB.now() >= q.deadline + GRACE) {
+    if ((q.hintIndex | 0) < 4) advance(); else endRound();
+  }
+}
+
+/* ---------- zobrazenie ---------- */
+const ladder = hi => '<ol class="ladder" aria-label="Body za nápovedu">' +
+  LADDER.map((v, i) => '<li class="' + (i < hi ? 'past' : i === hi ? 'cur' : '') + '">' + v + '</li>').join('') + '</ol>';
+
+function scoreboard(answered) {
+  const ids = Object.keys(S.players).filter(u => S.players[u].name);
+  ids.sort((a, b) => (S.players[b].score || 0) - (S.players[a].score || 0));
+  if (!ids.length) return '<p class="status">Zatiaľ sa nikto nepripojil.</p>';
+  return '<ul class="players" aria-label="Skóre">' + ids.map(u => {
+    const p = S.players[u], mine = u === DB.uid && !S.isMod;
+    return '<li class="player' + (mine ? ' on' : '') + (p.online ? '' : ' off') + '">' +
+      '<span class="pn">' + esc(p.name) + (mine ? ' (ty)' : '') + '</span>' +
+      '<span class="ps mono">' + (p.score || 0) + '</span>' +
+      (answered && answered[u] ? '<span class="turn got">odpovedal</span>' : '') +
+      (S.isMod && !p.online ? '<button class="kick" data-act="kick" data-uid="' + esc(u) + '" aria-label="Odstrániť hráča ' + esc(p.name) + '" title="Odstrániť hráča">✕</button>' : '') +
+      '</li>';
+  }).join('') + '</ul>';
+}
+
+function boardHtml() {
+  const used = G().used || {};
+  if (!S.cats.length) return '';
+  return '<div class="board" role="group" aria-label="Tabuľa otázok">' + S.cats.map(c => {
+    let tiles = '';
+    let left = 0;
+    for (let i = 0; i < PER_CAT; i++) {
+      const k = c.id + '_' + i;
+      if (i >= c.n) tiles += '<div class="tile empty static" aria-hidden="true">–</div>';
+      else if (used[k]) tiles += '<div class="tile done zero static" aria-label="Otázka ' + (i + 1) + ' už bola">✓</div>';
+      else {
+        left++;
+        tiles += S.isMod
+          ? '<button class="tile" data-act="open" data-cat="' + esc(c.id) + '" data-idx="' + i + '" aria-label="' + esc(c.name) + ', otázka ' + (i + 1) + '">' + (i + 1) + '</button>'
+          : '<div class="tile static">' + (i + 1) + '</div>';
+      }
+    }
+    return '<div class="row"><div class="cat">' + esc(c.name) + '<small>zostáva ' + left + ' z ' + c.n + '</small></div>' + tiles + '</div>';
+  }).join('') + '</div>';
+}
+
+function lastHtml() {
+  const l = G().last;
+  if (!l) return '';
+  const rs = Object.keys(l.results || {}).map(u => {
+    const r = l.results[u];
+    return esc(r.name) + ' (' + esc(r.text) + '): <strong>' + (r.pts ? '+' + r.pts : '0') + ' b</strong>';
+  });
+  return '<div class="last"><p class="kicker">Posledná otázka · ' + esc(l.cat) + '</p><p>Správna odpoveď: <strong>' + esc(l.answer) + '</strong></p>' +
+    (rs.length ? '<p>' + rs.join(' · ') + '</p>' : '<p class="dim">Nikto neodpovedal.</p>') + '</div>';
+}
+
+function boardBody() {
+  let status;
+  if (!S.cats.length) status = S.isMod ? '' : 'Moderátor ešte nenahral otázky.';
+  else status = S.isMod ? 'Vyber si tému a číslo otázky.' : 'Čaká sa, kým moderátor vyberie otázku.';
+  let tools = '';
+  if (S.isMod) {
+    tools = '<div class="tools">' +
+      '<label class="btn small file">Nahrať otázky znova<input type="file" id="bankFile" accept=".json,application/json" hidden></label>' +
+      '<button class="btn small" data-act="newgame">' + (S.confirmNew ? 'Naozaj? Vynulovať skóre a tabuľu' : 'Nová hra') + '</button></div>';
+  }
+  return '<main>' + scoreboard() + (status ? '<p class="status">' + status + '</p>' : '') + lastHtml() + boardHtml() + tools + '</main>';
+}
+
+function questionBody() {
+  const q = G().q, hi = q.hintIndex | 0, hints = toArr(q.hints), answered = q.answered || {};
+  const online = Object.keys(S.players).filter(u => S.players[u].name && S.players[u].online);
+  const nAns = online.filter(u => answered[u]).length;
+  const mq = S.isMod ? curQ() : null;
+  let h = '<main class="qwrap"><div class="qhead"><span>' + esc(q.catName) + ' · otázka ' + q.n + '</span><span>Odpovedali: <strong>' + nAns + ' z ' + online.length + '</strong></span></div>';
+  h += '<div class="worth"><span class="pts">' + LADDER[hi] + '</span><span class="unit">b</span></div>';
+  h += ladder(hi);
+  h += '<div class="timerrow"><div class="timer"><div class="bar" id="bar"></div></div><span class="secs" id="secs"></span></div>';
+  h += '<ol class="hints" aria-label="Nápovedy">';
+  for (let i = 0; i < 5; i++) {
+    if (i < hints.length) {
+      h += '<li class="hint' + (i === hi ? ' new' : '') + '"><span class="pts">' + LADDER[i] + ' b</span><p>' + esc(hints[i]) + '</p></li>';
+    } else if (mq) {
+      h += '<li class="hint rest"><span class="pts">' + LADDER[i] + ' b</span><p>' + esc(mq.hints[i]) + '</p></li>';
+    }
+  }
+  h += '</ol>';
+  if (S.isMod) {
+    h += '<div class="card gold"><p class="kicker">Správna odpoveď (vidíš len ty)</p><h2>' + (mq ? esc(mq.answer) : 'Načítavam…') + '</h2></div>';
+    const keys = Object.keys(S.ansAll || {});
+    h += '<div class="card"><p class="kicker">Došlé odpovede</p>' + (keys.length ? '<div class="chips">' + keys.map(u => {
+      const a = S.ansAll[u];
+      return '<span class="chip"><b>' + esc((S.players[u] || {}).name || '?') + ':</b> ' + esc(a.text) + ' <span class="dim">(' + LADDER[a.hint | 0] + ' b)</span></span>';
+    }).join('') + '</div>' : '<p class="dim">Zatiaľ nikto neodpovedal.</p>') + '</div>';
+    h += '<div class="actions"><button class="btn primary" data-act="endround">Ukončiť kolo teraz</button><button class="btn" data-act="cancelq">Zrušiť otázku</button></div>';
+  } else if (S.myAns) {
+    h += '<div class="locked"><small>Tvoja odpoveď je zamknutá</small><strong>' + esc(S.myAns.text) + '</strong> <span class="dim">za ' + LADDER[S.myAns.hint | 0] + ' b</span></div>';
+  } else {
+    h += '<form id="ansForm" class="field" autocomplete="off"><label class="sr" for="ans">Tvoja odpoveď</label>' +
+      '<input id="ans" type="text" maxlength="80" placeholder="Napíš odpoveď" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(S.inp.ans) + '">' +
+      '<button type="submit" class="btn primary" id="ansBtn">Odoslať za ' + LADDER[hi] + ' b</button></form>' +
+      '<p class="dim">Po odoslaní sa odpoveď zamkne. Ak neodpovieš, o 15 sekúnd príde ďalšia nápoveda.</p>';
+  }
+  h += scoreboard(answered);
+  return h + '</main>';
+}
+
+function revealBody() {
+  const rv = G().reveal, q = G().q || {}, ans = rv.answers || {}, hints = toArr(rv.hints);
+  const judged = Object.keys(ans).every(u => ans[u].ok === true || ans[u].ok === false);
+  let h = '<main class="qwrap"><div class="qhead"><span>' + esc(q.catName || '') + ' · otázka ' + (q.n || '') + '</span><span>Kolo skončilo</span></div>';
+  h += '<div class="card gold"><p class="kicker">Správna odpoveď</p><h2>' + esc(rv.answer) + '</h2></div>';
+  h += '<ol class="hints" aria-label="Nápovedy a odpovede">' + hints.map((t, i) => {
+    const chips = Object.keys(ans).filter(u => (ans[u].hint | 0) === i).map(u => {
+      const a = ans[u], cls = a.ok === true ? ' ok' : a.ok === false ? ' no' : '';
+      const mark = a.ok === true ? '<span class="mark">✓ +' + LADDER[i] + '</span>' : a.ok === false ? '<span class="mark">✗</span>' : '';
+      const jb = S.isMod ? '<button class="j' + (a.ok === true ? ' on-ok' : '') + '" data-act="judge" data-uid="' + esc(u) + '" data-v="1" aria-label="Označiť ' + esc(a.name) + ' ako správne">✓</button>' +
+        '<button class="j' + (a.ok === false ? ' on-no' : '') + '" data-act="judge" data-uid="' + esc(u) + '" data-v="0" aria-label="Označiť ' + esc(a.name) + ' ako nesprávne">✗</button>' : '';
+      return '<span class="chip' + cls + '"><b>' + esc(a.name) + ':</b> ' + esc(a.text) + ' ' + mark + jb + '</span>';
+    }).join('');
+    return '<li class="hint"><span class="pts">' + LADDER[i] + ' b</span><div class="body"><p>' + esc(t) + '</p>' + (chips ? '<div class="chips">' + chips + '</div>' : '') + '</div></li>';
+  }).join('') + '</ol>';
+  const silent = Object.keys(S.players).filter(u => S.players[u].name && !ans[u]).map(u => esc(S.players[u].name));
+  if (silent.length) h += '<p class="dim">Bez odpovede: ' + silent.join(', ') + '</p>';
+  if (S.isMod) {
+    h += '<div class="actions"><button class="btn primary" data-act="award"' + (judged ? '' : ' disabled') + '>Pripísať body a pokračovať</button>' +
+      (judged ? '' : '<span class="dim">Označ každú odpoveď ako správnu alebo nesprávnu.</span>') + '</div>';
+  } else {
+    h += '<p class="status">Moderátor vyhodnocuje odpovede…</p>';
+  }
+  return h + '</main>';
+}
+
+function joinBody() {
+  return '<main class="setup"><p class="lede">Zadaj svoje meno a počkaj na moderátora. Pri každej otázke uvidíš nápovedu a 15 sekúnd na odpoveď. Čím skôr uhádneš, tým viac bodov získaš. Odpoveď po odoslaní už nezmeníš.</p>' +
+    ladder(-1).replace('class="ladder"', 'class="ladder big"') +
+    '<form id="joinForm" class="field stack" autocomplete="off"><label class="sr" for="nm">Tvoje meno</label>' +
+    '<input id="nm" type="text" maxlength="20" placeholder="Tvoje meno" autocomplete="nickname" value="' + esc(S.inp.nm) + '">' +
+    '<button type="submit" class="btn primary">Vstúpiť do hry</button></form></main>';
+}
+
+function uploadCard() {
+  return '<main><div class="card gold"><h2>Nahraj otázky</h2><p>Databáza zatiaľ neobsahuje žiadne otázky. Vyber súbor <strong>otazky.json</strong>, ktorý máš uložený u seba (nikdy ho nedávaj do repozitára na GitHube).</p>' +
+    '<p><label class="btn primary file">Vybrať otazky.json<input type="file" id="bankFile" accept=".json,application/json" hidden></label></p></div></main>';
+}
+
+function loginHtml() {
+  if (S.isMod) return '';
+  let h = '<div class="foot"><button class="linkbtn" data-act="logintoggle">Som moderátor</button>';
+  if (S.loginOpen) {
+    h += '<form id="loginForm" class="field stack" autocomplete="on"><label class="sr" for="em">E-mail moderátora</label>' +
+      '<input id="em" type="email" placeholder="E-mail" autocomplete="username" value="' + esc(S.inp.em) + '">' +
+      '<label class="sr" for="pw">Heslo</label><input id="pw" type="password" placeholder="Heslo" autocomplete="current-password" value="' + esc(S.inp.pw) + '">' +
+      '<button type="submit" class="btn primary">Prihlásiť</button>' + (S.loginErr ? '<p class="err" role="alert">' + esc(S.loginErr) + '</p>' : '') + '</form>';
+  }
+  return h + '</div>';
+}
+
+function view() {
+  let body;
+  if (S.stage === 'boot') body = '<p class="status">Pripájam sa…</p>';
+  else if (S.stage === 'error') body = '<div class="card"><h2>Pripojenie zlyhalo</h2><p>' + esc(S.err) + '</p><p class="dim">Skontroluj firebase-config.js a pravidlá databázy a stránku obnov.</p></div>';
+  else {
+    const g = G();
+    const live = g.phase === 'question' && g.q ? 'q' : g.phase === 'reveal' && g.reveal ? 'r' : 'b';
+    if (S.isMod) body = !S.bank ? uploadCard() : live === 'q' ? questionBody() : live === 'r' ? revealBody() : boardBody();
+    else if (!(me() && me().name)) body = joinBody();
+    else body = live === 'q' ? questionBody() : live === 'r' ? revealBody() : boardBody();
+  }
+  let who = '';
+  if (S.isMod) who = '<span class="badge mod">Moderátor</span><button class="btn small" data-act="logout">Odhlásiť</button>';
+  else if (me() && me().name) who = '<span class="badge">' + esc(me().name) + '</span>';
+  const banner = DEMO ? '<p class="banner">Demo režim: hra funguje len medzi kartami v tomto prehliadači. Pre online hru vyplň súbor firebase-config.js.</p>' : '';
+  return banner + '<header class="top"><div><p class="kicker">Kvíz s nápovedami</p><h1>Päť nápovedí</h1></div><div class="who">' + who + '</div></header>' +
+    body + loginHtml() + (S.toast ? '<div class="toast" role="status">' + esc(S.toast) + '</div>' : '');
+}
+
+function render() {
+  const ae = document.activeElement;
+  const id = ae && ae.id, isIn = ae && ae.matches && ae.matches('input[type=text],input[type=email],input[type=password]');
+  let sel = null;
+  if (isIn) { try { sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {} }
+  $app.innerHTML = view();
+  if (id && isIn) {
+    const el = $(id);
+    if (el) { el.focus({ preventScroll: true }); if (sel && sel[0] != null) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+  }
+  tick();
+}
+
+/* ---------- udalosti ---------- */
+$app.addEventListener('input', e => { if (e.target.id) S.inp[e.target.id] = e.target.value; });
+$app.addEventListener('change', e => {
+  if (e.target.id === 'bankFile' && e.target.files && e.target.files[0]) uploadBank(e.target.files[0]);
+});
+$app.addEventListener('submit', e => {
+  e.preventDefault();
+  const id = e.target.id;
+  if (id === 'ansForm') submitAnswer();
+  else if (id === 'joinForm') join();
+  else if (id === 'loginForm') modLogin();
+});
+$app.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const a = b.getAttribute('data-act');
+  if (a !== 'newgame' && S.confirmNew) { S.confirmNew = false; render(); }
+  if (a === 'logintoggle') { S.loginOpen = !S.loginOpen; render(); }
+  else if (a === 'logout') modLogout();
+  else if (a === 'open') startQuestion(b.getAttribute('data-cat'), +b.getAttribute('data-idx'));
+  else if (a === 'endround') endRound();
+  else if (a === 'cancelq') cancelQuestion();
+  else if (a === 'judge') judge(b.getAttribute('data-uid'), b.getAttribute('data-v') === '1');
+  else if (a === 'award') award();
+  else if (a === 'newgame') newGame();
+  else if (a === 'kick') {
+    const u = b.getAttribute('data-uid');
+    write({ ['players/' + u]: null, ['answers/' + u]: null });
+  }
+});
+
+boot();
 })();
 </script>
-
 </body>
 </html>
