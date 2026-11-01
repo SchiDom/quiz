@@ -387,14 +387,14 @@ function subscribe() {
   unsubs.push(DB.on('meta/cats', v => { S.cats = toArr(v); render(); }, onErr));
   unsubs.push(DB.on('.info/connected', v => { S.connected = v === true; ensureOnline(); }));
   if (S.isMod) {
-    unsubs.push(DB.on('answers', v => { S.ansAll = v || {}; syncAnswered(); render(); }, onErr));
+    unsubs.push(DB.on('answers', v => { S.ansAll = v || {}; S.myAns = S.ansAll[DB.uid] || null; syncAnswered(); render(); }, onErr));
     unsubs.push(DB.on('bank', v => { S.bank = v; render(); }, onErr));
   } else {
     unsubs.push(DB.on('answers/' + DB.uid, v => { S.myAns = v; render(); }, onErr));
   }
 }
 function ensureOnline() {
-  if (S.isMod || !S.connected || !DB.uid) return;
+  if (!S.connected || !DB.uid) return;
   const m = S.players[DB.uid];
   if (m && m.name) {
     DB.onDisc('players/' + DB.uid + '/online', false);
@@ -429,7 +429,8 @@ async function modLogin() {
   render();
 }
 async function modLogout() {
-  try { await DB.signOut(); await DB.signInAnon(); } catch (e) {}
+  try {
+    if (me() && me().name) await DB.set('players/' + DB.uid + '/online', false).catch(() => {}); await DB.signOut(); await DB.signInAnon(); } catch (e) {}
   S.isMod = false; S.bank = null; subscribe(); render();
 }
 
@@ -585,12 +586,12 @@ function scoreboard(answered) {
   ids.sort((a, b) => (S.players[b].score || 0) - (S.players[a].score || 0));
   if (!ids.length) return '<p class="status">Zatiaľ sa nikto nepripojil.</p>';
   return '<ul class="players" aria-label="Skóre">' + ids.map(u => {
-    const p = S.players[u], mine = u === DB.uid && !S.isMod;
+    const p = S.players[u], mine = u === DB.uid;
     return '<li class="player' + (mine ? ' on' : '') + (p.online ? '' : ' off') + '">' +
       '<span class="pn">' + esc(p.name) + (mine ? ' (ty)' : '') + '</span>' +
       '<span class="ps mono">' + (p.score || 0) + '</span>' +
       (answered && answered[u] ? '<span class="turn got">odpovedal</span>' : '') +
-      (S.isMod && !p.online ? '<button class="kick" data-act="kick" data-uid="' + esc(u) + '" aria-label="Odstrániť hráča ' + esc(p.name) + '" title="Odstrániť hráča">✕</button>' : '') +
+      (S.isMod && !p.online && u !== DB.uid ? '<button class="kick" data-act="kick" data-uid="' + esc(u) + '" aria-label="Odstrániť hráča ' + esc(p.name) + '" title="Odstrániť hráča">✕</button>' : '') +
       '</li>';
   }).join('') + '</ul>';
 }
@@ -637,14 +638,20 @@ function boardBody() {
       '<label class="btn small file">Nahrať otázky znova<input type="file" id="bankFile" accept=".json,application/json" hidden></label>' +
       '<button class="btn small" data-act="newgame">' + (S.confirmNew ? 'Naozaj? Vynulovať skóre a tabuľu' : 'Nová hra') + '</button></div>';
   }
-  return '<main>' + scoreboard() + (status ? '<p class="status">' + status + '</p>' : '') + lastHtml() + boardHtml() + tools + '</main>';
+  let joinCard = '';
+  if (S.isMod && !(me() && me().name)) {
+    joinCard = '<div class="card"><p class="kicker">Chceš hrať aj ty?</p><form id="joinForm" class="field" autocomplete="off"><label class="sr" for="nm">Tvoje meno</label>' +
+      '<input id="nm" type="text" maxlength="20" placeholder="Tvoje meno" autocomplete="nickname" value="' + esc(S.inp.nm) + '">' +
+      '<button type="submit" class="btn primary">Pripojiť sa ako hráč</button></form>' +
+      '<p class="dim">Počas otázky neuvidíš správnu odpoveď ani cudzie tipy, kým kolo neskončí.</p></div>';
+  }
+  return '<main>' + scoreboard() + joinCard + (status ? '<p class="status">' + status + '</p>' : '') + lastHtml() + boardHtml() + tools + '</main>';
 }
 
 function questionBody() {
   const q = G().q, hi = q.hintIndex | 0, hints = toArr(q.hints), answered = q.answered || {};
   const online = Object.keys(S.players).filter(u => S.players[u].name && S.players[u].online);
   const nAns = online.filter(u => answered[u]).length;
-  const mq = S.isMod ? curQ() : null;
   let h = '<main class="qwrap"><div class="qhead"><span>' + esc(q.catName) + ' · otázka ' + q.n + '</span><span>Odpovedali: <strong>' + nAns + ' z ' + online.length + '</strong></span></div>';
   h += '<div class="worth"><span class="pts">' + LADDER[hi] + '</span><span class="unit">b</span></div>';
   h += ladder(hi);
@@ -653,26 +660,22 @@ function questionBody() {
   for (let i = 0; i < 5; i++) {
     if (i < hints.length) {
       h += '<li class="hint' + (i === hi ? ' new' : '') + '"><span class="pts">' + LADDER[i] + ' b</span><p>' + esc(hints[i]) + '</p></li>';
-    } else if (mq) {
-      h += '<li class="hint rest"><span class="pts">' + LADDER[i] + ' b</span><p>' + esc(mq.hints[i]) + '</p></li>';
     }
   }
   h += '</ol>';
-  if (S.isMod) {
-    h += '<div class="card gold"><p class="kicker">Správna odpoveď (vidíš len ty)</p><h2>' + (mq ? esc(mq.answer) : 'Načítavam…') + '</h2></div>';
-    const keys = Object.keys(S.ansAll || {});
-    h += '<div class="card"><p class="kicker">Došlé odpovede</p>' + (keys.length ? '<div class="chips">' + keys.map(u => {
-      const a = S.ansAll[u];
-      return '<span class="chip"><b>' + esc((S.players[u] || {}).name || '?') + ':</b> ' + esc(a.text) + ' <span class="dim">(' + LADDER[a.hint | 0] + ' b)</span></span>';
-    }).join('') + '</div>' : '<p class="dim">Zatiaľ nikto neodpovedal.</p>') + '</div>';
-    h += '<div class="actions"><button class="btn primary" data-act="endround">Ukončiť kolo teraz</button><button class="btn" data-act="cancelq">Zrušiť otázku</button></div>';
-  } else if (S.myAns) {
+  const playing = !!(me() && me().name);
+  if (S.myAns) {
     h += '<div class="locked"><small>Tvoja odpoveď je zamknutá</small><strong>' + esc(S.myAns.text) + '</strong> <span class="dim">za ' + LADDER[S.myAns.hint | 0] + ' b</span></div>';
-  } else {
+  } else if (playing) {
     h += '<form id="ansForm" class="field" autocomplete="off"><label class="sr" for="ans">Tvoja odpoveď</label>' +
       '<input id="ans" type="text" maxlength="80" placeholder="Napíš odpoveď" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(S.inp.ans) + '">' +
       '<button type="submit" class="btn primary" id="ansBtn">Odoslať za ' + LADDER[hi] + ' b</button></form>' +
       '<p class="dim">Po odoslaní sa odpoveď zamkne. Ak neodpovieš, o 15 sekúnd príde ďalšia nápoveda.</p>';
+  } else if (S.isMod) {
+    h += '<p class="status">Táto otázka ide bez teba. Ak chceš hrať, pripoj sa na tabuli pred ďalšou otázkou.</p>';
+  }
+  if (S.isMod) {
+    h += '<div class="actions"><button class="btn" data-act="endround">Ukončiť kolo teraz</button><button class="btn" data-act="cancelq">Zrušiť otázku</button></div>';
   }
   h += scoreboard(answered);
   return h + '</main>';
@@ -741,7 +744,7 @@ function view() {
     else body = live === 'q' ? questionBody() : live === 'r' ? revealBody() : boardBody();
   }
   let who = '';
-  if (S.isMod) who = '<span class="badge mod">Moderátor</span><button class="btn small" data-act="logout">Odhlásiť</button>';
+  if (S.isMod) who = '<span class="badge mod">Moderátor</span>' + (me() && me().name ? '<span class="badge">' + esc(me().name) + '</span>' : '') + '<button class="btn small" data-act="logout">Odhlásiť</button>';
   else if (me() && me().name) who = '<span class="badge">' + esc(me().name) + '</span>';
   const banner = DEMO ? '<p class="banner">Demo režim: hra funguje len medzi kartami v tomto prehliadači. Pre online hru vyplň súbor firebase-config.js.</p>' : '';
   return banner + '<header class="top"><div><p class="kicker">Kvíz s nápovedami</p><h1>Päť nápovedí</h1></div><div class="who">' + who + '</div></header>' +
