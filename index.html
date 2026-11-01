@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Päť nápovedí</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<style>
+/* Layout: jedna stĺpcová tabuľa, riadok = téma + 5 políčok; otázka sa otvorí na celú plochu. */
+:root{
+  --bg:#F1F3F9; --surface:#FFFFFF; --surface-2:#E6EAF4; --ink:#0F1630; --ink-2:#566080; --line:#CDD4E6;
+  --accent:#2340D8; --on-accent:#FFFFFF; --gold:#FFC21A; --on-gold:#231800; --good:#0E7A4B; --bad:#B42318;
+  --display:'Big Shoulders Display','Arial Narrow','Helvetica Neue',Arial,sans-serif;
+  --body:'Instrument Sans','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1021; --surface:#151B33; --surface-2:#1E2644; --ink:#EDF0FB; --ink-2:#9AA5C9; --line:#2C3659;
+    --accent:#8EA6FF; --on-accent:#0A0F26; --gold:#FFC933; --on-gold:#231800; --good:#4ADE9A; --bad:#FF8A80;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1021; --surface:#151B33; --surface-2:#1E2644; --ink:#EDF0FB; --ink-2:#9AA5C9; --line:#2C3659;
+  --accent:#8EA6FF; --on-accent:#0A0F26; --gold:#FFC933; --on-gold:#231800; --good:#4ADE9A; --bad:#FF8A80;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+#app{max-width:980px;margin:0 auto;padding-block:24px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+h1,h2,.cat,.pts,.ps{font-family:var(--display);text-transform:uppercase;letter-spacing:.02em;line-height:1}
+h1{font-size:clamp(2.6rem,9vw,4.6rem);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(2rem,6vw,3rem);font-weight:900;margin:.1em 0 .2em;text-wrap:balance}
+.kicker{font-size:.8rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0 0 .6rem}
+.lede{max-width:60ch;color:var(--ink-2);margin:.8rem 0 0}
+
+/* ladder */
+.ladder{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.ladder li{font-family:var(--display);font-weight:900;font-size:1.5rem;text-align:center;padding:.45rem 0;border:1px solid var(--line);border-radius:6px;color:var(--ink-2);background:transparent}
+.ladder li.past{background:var(--surface-2);color:var(--ink-2);text-decoration:line-through;text-decoration-thickness:2px}
+.ladder li.cur{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.ladder.big{margin:1.6rem 0 0;max-width:520px}
+.ladder.big li{font-size:2rem;padding:.6rem 0;color:var(--ink)}
+.ladder.big li:nth-child(n){opacity:1}
+
+/* setup */
+.setup{padding-top:2vh}
+.plist{display:grid;gap:10px;margin:2rem 0 0;padding:0;list-style:none;max-width:520px}
+.plist li{display:flex;gap:8px}
+.plist input{flex:1;min-width:0;padding:.7rem .85rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.plist input::placeholder{color:var(--ink-2)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:1.4rem}
+
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:.7rem 1.1rem;border-radius:6px;font-weight:600;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.small{padding:.45rem .8rem;font-size:.9rem}
+
+/* board */
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.top h1{font-size:clamp(2.2rem,7vw,3.4rem)}
+.players{list-style:none;margin:1.2rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.player{display:flex;align-items:baseline;gap:.7rem;padding:.5rem .9rem;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.player .pn{font-weight:600;overflow-wrap:anywhere}
+.player .ps{font-weight:900;font-size:1.7rem}
+.player .turn{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.player.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.status{margin:1rem 0 .4rem;color:var(--ink-2)}
+.status strong{color:var(--ink)}
+.board{margin-top:.6rem}
+.row{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(5,minmax(0,1fr));gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.row:last-child{border-bottom:1px solid var(--line)}
+.cat{font-weight:900;font-size:1.45rem;overflow-wrap:anywhere}
+.cat small{display:block;font-family:var(--body);font-weight:500;font-size:.78rem;letter-spacing:.04em;text-transform:none;color:var(--ink-2);margin-top:.25rem}
+.tile{height:54px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-family:var(--display);font-weight:900;font-size:1.7rem;cursor:pointer;color:var(--ink)}
+.tile:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.tile.done{background:var(--gold);border-color:var(--gold);color:var(--on-gold);cursor:default}
+.tile.done.zero{background:var(--surface-2);border-color:var(--line);color:var(--ink-2)}
+.tile.empty{border-style:dashed;background:transparent;color:var(--ink-2);cursor:default;opacity:.7}
+.final{margin:1rem 0 0;padding:1rem 1.2rem;border:2px solid var(--gold);border-radius:6px;background:var(--surface)}
+.final h2{margin:0 0 .3rem}
+.foot{margin-top:1.4rem;font-size:.85rem;color:var(--ink-2)}
+
+/* question */
+.qwrap{max-width:720px;margin:0 auto}
+.qhead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;color:var(--ink-2);font-weight:600}
+.qhead strong{color:var(--ink)}
+.worth{display:flex;align-items:flex-end;gap:.5rem;margin:1rem 0 .9rem}
+.worth .pts{font-weight:900;font-size:clamp(4.5rem,22vw,7.5rem);color:var(--ink)}
+.worth .unit{font-family:var(--display);font-weight:900;font-size:2rem;padding-bottom:.9rem;color:var(--ink-2)}
+.hints{list-style:none;margin:1.2rem 0 0;padding:0;display:grid;gap:8px}
+.hint{display:grid;grid-template-columns:4.2rem minmax(0,1fr);gap:.9rem;align-items:baseline;padding:.8rem 1rem;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.hint .pts{font-weight:900;font-size:1.5rem;color:var(--ink-2)}
+.hint p{margin:0;overflow-wrap:anywhere}
+.hint.new{border:2px solid var(--accent);padding:calc(.8rem - 1px) calc(1rem - 1px)}
+.hint.new .pts{color:var(--accent)}
+.hint.new p{font-size:1.15rem;font-weight:500}
+.hint.rest{background:transparent;border-style:dashed;color:var(--ink-2)}
+.skip{margin-top:10px}
+.result{margin-top:1.4rem;padding:1.2rem;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.result.solved{border:2px solid var(--good)}
+.result.failed{border-style:dashed}
+.result .kicker.ok{color:var(--good)}
+.result p{margin:.2rem 0 1rem}
+
+@media (max-width:620px){
+  .row{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .cat{grid-column:1/-1}
+  .tile{height:50px}
+  .hint{grid-template-columns:3.4rem minmax(0,1fr);gap:.6rem}
+}
+
+/* ---- online verzia ---- */
+.banner{margin:0 0 16px;padding:.6rem .9rem;border:1px dashed var(--line);border-radius:6px;color:var(--ink-2);font-size:.9rem}
+.who{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{padding:.25rem .7rem;border-radius:999px;background:var(--surface-2);font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;overflow-wrap:anywhere}
+.badge.mod{background:var(--accent);color:var(--on-accent)}
+.card{padding:1rem 1.2rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin-top:1rem}
+.card h2{font-size:1.9rem;margin:0 0 .4rem}
+.card p{margin:.3rem 0}
+.card.gold{border:2px solid var(--gold)}
+.card.ok{border:2px solid var(--good)}
+.mono{font-variant-numeric:tabular-nums}
+.field{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.2rem}
+.field input{flex:1 1 220px;min-width:0;padding:.8rem 1rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-size:1.05rem}
+.field input::placeholder{color:var(--ink-2)}
+.field.stack{flex-direction:column;max-width:380px}
+.field.stack input{flex:none}
+.timerrow{display:flex;align-items:center;gap:14px;margin-top:.6rem}
+.timer{flex:1;height:12px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.timer .bar{height:100%;width:100%;background:var(--gold)}
+.secs{font-family:var(--display);font-weight:900;font-size:2rem;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.locked{margin-top:1.2rem;padding:.9rem 1.1rem;border:2px solid var(--accent);border-radius:6px;background:var(--surface)}
+.locked small{display:block;color:var(--ink-2);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.75rem;margin-bottom:.2rem}
+.locked strong{font-size:1.25rem;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:.55rem}
+.chip{display:inline-flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.3rem .6rem;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);overflow-wrap:anywhere;min-width:0}
+.chip.ok{border:2px solid var(--good)}
+.chip.no{border:2px solid var(--bad)}
+.chip .mark{font-weight:700}
+.chip.ok .mark{color:var(--good)}
+.chip.no .mark{color:var(--bad)}
+.j{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:.15rem .55rem;font-weight:700;cursor:pointer}
+.j:hover{border-color:var(--accent)}
+.j.on-ok{background:var(--good);border-color:var(--good);color:var(--bg)}
+.j.on-no{background:var(--bad);border-color:var(--bad);color:var(--bg)}
+.tile.static{cursor:default}
+.tile.static:hover{border-color:var(--line);color:var(--ink)}
+.player.off{opacity:.55}
+.player .kick{margin-left:.2rem;border:0;background:transparent;color:inherit;cursor:pointer;font-size:1rem;padding:0 .2rem}
+.player.on .turn,.player .turn.got{opacity:1}
+.last{margin-top:1rem;padding:.8rem 1rem;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.last p{margin:.15rem 0}
+.tools{display:flex;flex-wrap:wrap;gap:10px;margin-top:1.6rem;align-items:center}
+.file{display:inline-block}
+.file input{max-width:100%}
+.linkbtn{border:0;background:transparent;color:var(--ink-2);text-decoration:underline;cursor:pointer;padding:.4rem 0;font-size:.9rem}
+.foot{margin-top:2rem}
+.err{color:var(--bad);font-weight:600;margin:.6rem 0 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:min(92vw,520px);padding:.7rem 1rem;border-radius:6px;background:var(--ink);color:var(--bg);font-weight:600;z-index:20;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.dim{color:var(--ink-2)}
+.hint{grid-template-columns:5.2rem minmax(0,1fr)}
+.hint .pts{white-space:nowrap}
+.hint .body{min-width:0}
+@media (max-width:620px){.secs{font-size:1.6rem}.hint{grid-template-columns:4.4rem minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>Táto hra potrebuje zapnutý JavaScript.</noscript>
+<script src="firebase-config.js"></script>
+<script>
+(() => {
+'use strict';
+
+const LADDER = [100, 80, 60, 40, 20];
+const HINT_MS = window.PN_HINT_MS || 15000;
+const GRACE = 700;
+const PER_CAT = 5;
+const CFG = window.FIREBASE_CONFIG;
+const DEMO = !(CFG && CFG.apiKey && CFG.databaseURL);
+const $app = document.getElementById('app');
+const $ = id => document.getElementById(id);
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toArr = v => {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.slice();
+  return Object.keys(v).sort((a, b) => a - b).map(k => v[k]);
+};
+function clean(v) {
+  if (v == null) return null;
+  if (Array.isArray(v)) {
+    const o = {}; let n = 0;
+    v.forEach((x, i) => { const c = clean(x); if (c != null) { o[i] = c; n++; } });
+    return n ? o : null;
+  }
+  if (typeof v === 'object') {
+    const o = {}; let n = 0;
+    Object.keys(v).forEach(k => { const c = clean(v[k]); if (c != null) { o[k] = c; n++; } });
+    return n ? o : null;
+  }
+  return v;
+}
+
+/* ---------- úložisko: demo (len tento prehliadač) ---------- */
+function localDB() {
+  const KEY = 'pn-demo-db-v1';
+  let tree = {}, ls = [], ch = null; const disc = {};
+  try { ch = new BroadcastChannel('pn-demo-v1'); } catch (e) {}
+  const load = () => { try { tree = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { tree = {}; } };
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(tree)); } catch (e) {} };
+  const seg = p => p.split('/').filter(Boolean);
+  const getAt = p => {
+    let n = tree;
+    for (const s of seg(p)) { if (n == null || typeof n !== 'object') return null; n = n[s]; }
+    return n === undefined ? null : n;
+  };
+  const setAt = (p, v) => {
+    const s = seg(p);
+    if (!s.length) { tree = v == null ? {} : v; return; }
+    let n = tree; const stack = [];
+    for (let i = 0; i < s.length - 1; i++) {
+      if (n[s[i]] == null || typeof n[s[i]] !== 'object') { if (v == null) return; n[s[i]] = {}; }
+      stack.push([n, s[i]]); n = n[s[i]];
+    }
+    if (v == null) delete n[s[s.length - 1]]; else n[s[s.length - 1]] = v;
+    for (let j = stack.length - 1; j >= 0; j--) {
+      const [par, k] = stack[j];
+      if (par[k] && typeof par[k] === 'object' && !Object.keys(par[k]).length) delete par[k]; else break;
+    }
+  };
+  const fire = () => ls.slice().forEach(l => {
+    const v = getAt(l.p), j = JSON.stringify(v);
+    if (j !== l.j) { l.j = j; l.cb(v == null ? null : JSON.parse(j)); }
+  });
+  const sync = () => { load(); fire(); };
+  const commit = () => { save(); if (ch) ch.postMessage(1); fire(); };
+  if (ch) ch.onmessage = sync;
+  window.addEventListener('storage', e => { if (e.key === KEY) sync(); });
+  const self = {
+    demo: true, uid: null, isAnon: true,
+    init() {
+      load();
+      if (sessionStorage.getItem('pn-mod')) { self.uid = 'demo-mod'; self.isAnon = false; }
+      return Promise.resolve();
+    },
+    now: () => Date.now(),
+    signInAnon() {
+      let id = sessionStorage.getItem('pn-uid');
+      if (!id) { id = 'd' + Math.random().toString(36).slice(2, 10); sessionStorage.setItem('pn-uid', id); }
+      self.uid = id; self.isAnon = true; return Promise.resolve();
+    },
+    signInMod(email, pw) {
+      if (!pw) return Promise.reject(new Error('Zadaj heslo.'));
+      sessionStorage.setItem('pn-mod', '1'); self.uid = 'demo-mod'; self.isAnon = false; return Promise.resolve();
+    },
+    signOut() { sessionStorage.removeItem('pn-mod'); self.uid = null; self.isAnon = true; return Promise.resolve(); },
+    get(p) { load(); const v = getAt(p); return Promise.resolve(v == null ? null : JSON.parse(JSON.stringify(v))); },
+    set(p, v) { load(); setAt(p, clean(v)); commit(); return Promise.resolve(); },
+    update(m) { load(); Object.keys(m).forEach(p => setAt(p, clean(m[p]))); commit(); return Promise.resolve(); },
+    on(p, cb) {
+      const l = { p, cb, j: undefined };
+      ls.push(l);
+      setTimeout(() => {
+        if (p === '.info/connected') { l.j = 'true'; cb(true); return; }
+        load(); const v = getAt(p); l.j = JSON.stringify(v); cb(v == null ? null : JSON.parse(l.j));
+      }, 0);
+      return () => { ls = ls.filter(x => x !== l); };
+    },
+    onDisc(p, v) {
+      if (disc[p]) return; disc[p] = 1;
+      window.addEventListener('pagehide', () => { load(); setAt(p, v); save(); if (ch) ch.postMessage(1); });
+    }
+  };
+  return self;
+}
+
+/* ---------- úložisko: Firebase ---------- */
+function fbDB(cfg) {
+  const base = 'https://www.gstatic.com/firebasejs/10.14.1/';
+  let auth, db, off = 0;
+  const loadJS = src => new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error('Nepodarilo sa načítať knižnicu Firebase.'));
+    document.head.appendChild(s);
+  });
+  const self = {
+    demo: false, uid: null, isAnon: true,
+    setUser(u) { self.uid = u ? u.uid : null; self.isAnon = u ? u.isAnonymous : true; },
+    init() {
+      return loadJS(base + 'firebase-app-compat.js')
+        .then(() => Promise.all([loadJS(base + 'firebase-auth-compat.js'), loadJS(base + 'firebase-database-compat.js')]))
+        .then(() => {
+          firebase.initializeApp(cfg);
+          auth = firebase.auth(); db = firebase.database();
+          db.ref('.info/serverTimeOffset').on('value', s => { off = s.val() || 0; });
+          return new Promise(res => { const un = auth.onAuthStateChanged(u => { un(); res(u); }); });
+        })
+        .then(u => self.setUser(u));
+    },
+    now: () => Date.now() + off,
+    signInAnon() { return auth.signInAnonymously().then(c => self.setUser(c.user)); },
+    signInMod(e, p) { return auth.signInWithEmailAndPassword(e, p).then(c => self.setUser(c.user)); },
+    signOut() { return auth.signOut().then(() => self.setUser(null)); },
+    get(p) { return db.ref(p).once('value').then(s => s.val()); },
+    set(p, v) { return db.ref(p).set(clean(v)); },
+    update(m) { const o = {}; Object.keys(m).forEach(k => { o[k] = clean(m[k]); }); return db.ref().update(o); },
+    on(p, cb, errcb) {
+      const r = db.ref(p);
+      const h = r.on('value', s => cb(s.val()), e => { if (errcb) errcb(e); });
+      return () => r.off('value', h);
+    },
+    onDisc(p, v) { db.ref(p).onDisconnect().set(v); }
+  };
+  return self;
+}
+
+const DB = DEMO ? localDB() : fbDB(CFG);
+
+/* ---------- stav ---------- */
+const S = {
+  stage: 'boot', err: '', isMod: false, connected: false,
+  players: {}, game: {}, cats: [], myAns: null, ansAll: {}, bank: null,
+  inp: {}, loginOpen: false, loginErr: '', toast: '', confirmNew: false, confirmWipe: false
+};
+let unsubs = [], busy = false, toastT = null, lastPres = 0;
+const G = () => S.game || {};
+const me = () => S.players[DB.uid] || null;
+
+function toast(msg) {
+  S.toast = msg; render();
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { S.toast = ''; render(); }, 4500);
+}
+function write(up, okMsg) {
+  busy = true;
+  return DB.update(up)
+    .then(() => { if (okMsg) toast(okMsg); })
+    .catch(e => toast('Zápis zlyhal: ' + (e && e.message || e)))
+    .then(() => { busy = false; });
+}
+function niceErr(e) {
+  const c = e && e.code || '';
+  if (/invalid-credential|wrong-password|user-not-found|invalid-email/.test(c)) return 'Nesprávny e-mail alebo heslo.';
+  if (c === 'auth/operation-not-allowed') return 'V konzole Firebase zapni prihlasovanie e-mailom a heslom.';
+  if (c === 'auth/too-many-requests') return 'Príliš veľa pokusov. Skús to o chvíľu.';
+  return (e && e.message) || String(e);
+}
+
+/* ---------- štart a prihlásenie ---------- */
+async function checkMod() {
+  try { await DB.get('bank'); S.isMod = true; } catch (e) { S.isMod = false; }
+}
+async function boot() {
+  render();
+  try {
+    await DB.init();
+    if (!DB.uid) await DB.signInAnon();
+    if (!DB.isAnon) await checkMod();
+    S.stage = 'ready';
+    subscribe();
+    setInterval(tick, 250);
+  } catch (e) {
+    S.stage = 'error'; S.err = (e && e.message) || String(e);
+  }
+  render();
+}
+function subscribe() {
+  unsubs.forEach(f => f()); unsubs = [];
+  S.myAns = null; S.ansAll = {};
+  const onErr = e => { S.err = 'Chyba čítania z databázy: ' + (e && e.message || e); S.stage = 'error'; render(); };
+  unsubs.push(DB.on('players', v => { S.players = v || {}; ensureOnline(); render(); }, onErr));
+  unsubs.push(DB.on('game', v => { S.game = v || {}; render(); }, onErr));
+  unsubs.push(DB.on('meta/cats', v => { S.cats = toArr(v); render(); }, onErr));
+  unsubs.push(DB.on('.info/connected', v => { S.connected = v === true; ensureOnline(); }));
+  if (S.isMod) {
+    unsubs.push(DB.on('answers', v => { S.ansAll = v || {}; S.myAns = S.ansAll[DB.uid] || null; syncAnswered(); render(); }, onErr));
+    unsubs.push(DB.on('bank', v => { S.bank = v; render(); }, onErr));
+  } else {
+    unsubs.push(DB.on('answers/' + DB.uid, v => { S.myAns = v; render(); }, onErr));
+  }
+}
+function ensureOnline() {
+  if (!S.connected || !DB.uid) return;
+  const m = S.players[DB.uid];
+  if (m && m.name) {
+    DB.onDisc('players/' + DB.uid + '/online', false);
+    if (m.online !== true && Date.now() - lastPres > 3000) {
+      lastPres = Date.now();
+      DB.set('players/' + DB.uid + '/online', true).catch(() => {});
+    }
+  }
+}
+async function join() {
+  const name = (S.inp.nm || '').trim().slice(0, 20);
+  if (!name) { toast('Zadaj meno.'); return; }
+  try {
+    await DB.set('players/' + DB.uid + '/name', name);
+    await DB.set('players/' + DB.uid + '/online', true);
+    DB.onDisc('players/' + DB.uid + '/online', false);
+  } catch (e) { toast('Vstup do hry zlyhal: ' + (e && e.message || e)); }
+}
+async function modLogin() {
+  const em = (S.inp.em || '').trim(), pw = S.inp.pw || '';
+  S.loginErr = '';
+  try {
+    await DB.signInMod(em, pw);
+    await checkMod();
+    if (!S.isMod) {
+      await DB.signOut(); await DB.signInAnon();
+      throw new Error('Tento účet nie je moderátor.');
+    }
+    S.loginOpen = false; S.inp.pw = '';
+    subscribe();
+  } catch (e) { S.loginErr = niceErr(e); }
+  render();
+}
+async function modLogout() {
+  try {
+    if (me() && me().name) await DB.set('players/' + DB.uid + '/online', false).catch(() => {}); await DB.signOut(); await DB.signInAnon(); } catch (e) {}
+  S.isMod = false; S.bank = null; subscribe(); render();
+}
+
+/* ---------- moderátor: otázky ---------- */
+const slug = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'tema';
+async function uploadBank(file) {
+  try {
+    const j = JSON.parse(await file.text());
+    if (!j || !Array.isArray(j.cats) || !j.cats.length) throw new Error('V súbore chýba zoznam tém (cats).');
+    const bank = {}, meta = []; const seen = {}; let total = 0;
+    j.cats.forEach((c, ci) => {
+      if (!c.name || !Array.isArray(c.q)) throw new Error('Téma č. ' + (ci + 1) + ' nemá názov alebo otázky.');
+      let id = slug(c.id || c.name); while (seen[id]) id += '_'; seen[id] = 1;
+      const qs = c.q.slice(0, PER_CAT).map((q, qi) => {
+        if (!q.answer || !Array.isArray(q.hints) || q.hints.length !== 5 || q.hints.some(h => !h))
+          throw new Error('Otázka ' + (qi + 1) + ' v téme „' + c.name + '“ musí mať odpoveď a presne 5 nápovedí.');
+        return { answer: String(q.answer), hints: q.hints.map(String) };
+      });
+      total += qs.length;
+      bank[id] = { name: String(c.name), order: ci, q: qs };
+      meta.push({ id, name: String(c.name), n: qs.length });
+    });
+    await DB.update({ 'bank': { cats: bank }, 'meta/cats': meta });
+    toast('Otázky nahrané: ' + total + ' v ' + meta.length + ' témach.');
+  } catch (e) { toast('Súbor sa nepodarilo načítať: ' + (e && e.message || e)); }
+}
+function curQ() {
+  const q = G().q;
+  if (!q || !S.bank || !S.bank.cats) return null;
+  const c = S.bank.cats[q.cat];
+  const x = c && toArr(c.q)[q.n - 1];
+  return x ? { answer: x.answer, hints: toArr(x.hints) } : null;
+}
+function startQuestion(cat, idx) {
+  if (busy || !S.bank || !S.bank.cats[cat]) return;
+  const c = S.bank.cats[cat], x = toArr(c.q)[idx];
+  if (!x) return;
+  const hints = toArr(x.hints);
+  write({
+    'answers': null,
+    'game/reveal': null,
+    'game/last': null,
+    'game/phase': 'question',
+    'game/q': {
+      key: cat + '_' + idx, cat, n: idx + 1, catName: c.name, hintIndex: 0,
+      hints: [hints[0]], dur: HINT_MS, deadline: DB.now() + HINT_MS, open: true
+    }
+  });
+}
+function advance() {
+  const q = G().q, qd = curQ();
+  if (busy || !q || !qd) return;
+  const i = (q.hintIndex | 0) + 1;
+  write({
+    'game/q/hintIndex': i,
+    ['game/q/hints/' + i]: qd.hints[i],
+    'game/q/deadline': DB.now() + HINT_MS
+  });
+}
+function endRound() {
+  const q = G().q, qd = curQ();
+  if (busy || !q || !qd || G().phase !== 'question') return;
+  const ans = {};
+  Object.keys(S.ansAll || {}).forEach(u => {
+    const a = S.ansAll[u];
+    ans[u] = { name: (S.players[u] || {}).name || '?', text: a.text, hint: a.hint | 0 };
+  });
+  write({
+    'game/phase': 'reveal',
+    'game/q/open': false,
+    'game/reveal': { hints: qd.hints, answer: qd.answer, answers: ans }
+  });
+}
+function syncAnswered() {
+  const g = G();
+  if (!S.isMod || g.phase !== 'question' || !g.q) return;
+  const map = {}; Object.keys(S.ansAll || {}).forEach(u => { map[u] = true; });
+  const cur = g.q.answered || {};
+  if (JSON.stringify(Object.keys(map).sort()) !== JSON.stringify(Object.keys(cur).sort()))
+    DB.set('game/q/answered', Object.keys(map).length ? map : null).catch(() => {});
+}
+function judge(uid, v) {
+  const a = (G().reveal || {}).answers || {};
+  const next = a[uid] && a[uid].ok === v ? null : v;
+  DB.set('game/reveal/answers/' + uid + '/ok', next).catch(e => toast('Zápis zlyhal: ' + e.message));
+}
+function award() {
+  const g = G(), rv = g.reveal, q = g.q;
+  if (busy || !rv || !q) return;
+  const ans = rv.answers || {}, up = {}, results = {};
+  Object.keys(ans).forEach(u => {
+    const a = ans[u], pts = a.ok === true ? LADDER[a.hint] : 0;
+    results[u] = { name: a.name, pts, text: a.text };
+    if (pts) up['players/' + u + '/score'] = ((S.players[u] || {}).score || 0) + pts;
+  });
+  up['game/used/' + q.key] = true;
+  up['game/phase'] = 'board';
+  up['game/q'] = null;
+  up['game/reveal'] = null;
+  up['game/last'] = { cat: q.catName, answer: rv.answer, results };
+  up['answers'] = null;
+  write(up);
+}
+function cancelQuestion() {
+  write({ 'game/phase': 'board', 'game/q': null, 'game/reveal': null, 'answers': null });
+}
+function newGame() {
+  if (!S.confirmNew) { S.confirmNew = true; render(); return; }
+  S.confirmNew = false;
+  const up = { 'game': { phase: 'board' }, 'answers': null };
+  Object.keys(S.players).forEach(u => { up['players/' + u + '/score'] = 0; });
+  write(up, 'Nová hra začala.');
+}
+function completeReset() {
+  if (!S.confirmWipe) { S.confirmWipe = true; render(); return; }
+  S.confirmWipe = false;
+  S.confirmNew = false;
+  write({
+    'players': null,
+    'answers': null,
+    'game': { phase: 'board', q: null, reveal: null, last: null, used: null }
+  }, 'Kompletný reset prebehol. Hráči sa môžu znova pripojiť.');
+}
+
+/* ---------- hráč: odpoveď ---------- */
+function submitAnswer() {
+  const q = G().q, t = (S.inp.ans || '').trim();
+  if (!q || S.myAns || !t) return;
+  if (DB.now() > q.deadline) { toast('Čas na túto nápovedu vypršal.'); return; }
+  const hint = q.hintIndex | 0;
+  S.inp.ans = '';
+  DB.set('answers/' + DB.uid, { text: t.slice(0, 80), hint })
+    .catch(() => toast('Odpoveď sa nepodarilo odoslať. Skús znova pri ďalšej nápovedi.'));
+}
+
+/* ---------- časovač a riadenie kola (len moderátor) ---------- */
+function tick() {
+  const g = G(), q = g.q;
+  if (g.phase === 'question' && q) {
+    const rem = Math.max(0, q.deadline - DB.now());
+    const bar = $('bar'); if (bar) bar.style.width = (rem / (q.dur || HINT_MS) * 100) + '%';
+    const s = $('secs'); if (s) s.textContent = Math.ceil(rem / 1000);
+    const b = $('ansBtn'); if (b) b.disabled = rem <= 0;
+  }
+  modLoop();
+}
+function modLoop() {
+  const g = G(), q = g.q;
+  if (!S.isMod || busy || g.phase !== 'question' || !q || !q.open || !curQ()) return;
+  const online = Object.keys(S.players).filter(u => S.players[u].name && S.players[u].online);
+  if (online.length && online.every(u => S.ansAll[u])) { endRound(); return; }
+  if (DB.now() >= q.deadline + GRACE) {
+    if ((q.hintIndex | 0) < 4) advance(); else endRound();
+  }
+}
+
+/* ---------- zobrazenie ---------- */
+const ladder = hi => '<ol class="ladder" aria-label="Body za nápovedu">' +
+  LADDER.map((v, i) => '<li class="' + (i < hi ? 'past' : i === hi ? 'cur' : '') + '">' + v + '</li>').join('') + '</ol>';
+
+function scoreboard(answered) {
+  const ids = Object.keys(S.players).filter(u => S.players[u].name);
+  ids.sort((a, b) => (S.players[b].score || 0) - (S.players[a].score || 0));
+  if (!ids.length) return '<p class="status">Zatiaľ sa nikto nepripojil.</p>';
+  return '<ul class="players" aria-label="Skóre">' + ids.map(u => {
+    const p = S.players[u], mine = u === DB.uid;
+    return '<li class="player' + (mine ? ' on' : '') + (p.online ? '' : ' off') + '">' +
+      '<span class="pn">' + esc(p.name) + (mine ? ' (ty)' : '') + '</span>' +
+      '<span class="ps mono">' + (p.score || 0) + '</span>' +
+      (answered && answered[u] ? '<span class="turn got">odpovedal</span>' : '') +
+      (S.isMod && !p.online && u !== DB.uid ? '<button class="kick" data-act="kick" data-uid="' + esc(u) + '" aria-label="Odstrániť hráča ' + esc(p.name) + '" title="Odstrániť hráča">✕</button>' : '') +
+      '</li>';
+  }).join('') + '</ul>';
+}
+
+function boardHtml() {
+  const used = G().used || {};
+  if (!S.cats.length) return '';
+  return '<div class="board" role="group" aria-label="Tabuľa otázok">' + S.cats.map(c => {
+    let tiles = '';
+    let left = 0;
+    for (let i = 0; i < PER_CAT; i++) {
+      const k = c.id + '_' + i;
+      if (i >= c.n) tiles += '<div class="tile empty static" aria-hidden="true">–</div>';
+      else if (used[k]) tiles += '<div class="tile done zero static" aria-label="Otázka ' + (i + 1) + ' už bola">✓</div>';
+      else {
+        left++;
+        tiles += S.isMod
+          ? '<button class="tile" data-act="open" data-cat="' + esc(c.id) + '" data-idx="' + i + '" aria-label="' + esc(c.name) + ', otázka ' + (i + 1) + '">' + (i + 1) + '</button>'
+          : '<div class="tile static">' + (i + 1) + '</div>';
+      }
+    }
+    return '<div class="row"><div class="cat">' + esc(c.name) + '<small>zostáva ' + left + ' z ' + c.n + '</small></div>' + tiles + '</div>';
+  }).join('') + '</div>';
+}
+
+function lastHtml() {
+  const l = G().last;
+  if (!l) return '';
+  const rs = Object.keys(l.results || {}).map(u => {
+    const r = l.results[u];
+    return esc(r.name) + ' (' + esc(r.text) + '): <strong>' + (r.pts ? '+' + r.pts : '0') + ' b</strong>';
+  });
+  return '<div class="last"><p class="kicker">Posledná otázka · ' + esc(l.cat) + '</p><p>Správna odpoveď: <strong>' + esc(l.answer) + '</strong></p>' +
+    (rs.length ? '<p>' + rs.join(' · ') + '</p>' : '<p class="dim">Nikto neodpovedal.</p>') + '</div>';
+}
+
+function boardBody() {
+  let status;
+  if (!S.cats.length) status = S.isMod ? '' : 'Moderátor ešte nenahral otázky.';
+  else status = S.isMod ? 'Vyber si tému a číslo otázky.' : 'Čaká sa, kým moderátor vyberie otázku.';
+  let tools = '';
+  if (S.isMod) {
+    tools = '<div class="tools">' +
+      '<label class="btn small file">Nahrať otázky znova<input type="file" id="bankFile" accept=".json,application/json" hidden></label>' +
+      '<button class="btn small" data-act="newgame">' + (S.confirmNew ? 'Naozaj? Vynulovať skóre a tabuľu' : 'Nová hra') + '</button>' +
+      '<button class="btn small" data-act="fullreset">' + (S.confirmWipe ? 'Naozaj vymazať všetkých hráčov?' : 'Kompletný reset hry') + '</button></div>';
+  }
+  let joinCard = '';
+  if (S.isMod && !(me() && me().name)) {
+    joinCard = '<div class="card"><p class="kicker">Chceš hrať aj ty?</p><form id="joinForm" class="field" autocomplete="off"><label class="sr" for="nm">Tvoje meno</label>' +
+      '<input id="nm" type="text" maxlength="20" placeholder="Tvoje meno" autocomplete="nickname" value="' + esc(S.inp.nm) + '">' +
+      '<button type="submit" class="btn primary">Pripojiť sa ako hráč</button></form>' +
+      '<p class="dim">Počas otázky neuvidíš správnu odpoveď ani cudzie tipy, kým kolo neskončí.</p></div>';
+  }
+  return '<main>' + scoreboard() + joinCard + (status ? '<p class="status">' + status + '</p>' : '') + lastHtml() + boardHtml() + tools + '</main>';
+}
+
+function questionBody() {
+  const q = G().q, hi = q.hintIndex | 0, hints = toArr(q.hints), answered = q.answered || {};
+  const online = Object.keys(S.players).filter(u => S.players[u].name && S.players[u].online);
+  const nAns = online.filter(u => answered[u]).length;
+  let h = '<main class="qwrap"><div class="qhead"><span>' + esc(q.catName) + ' · otázka ' + q.n + '</span><span>Odpovedali: <strong>' + nAns + ' z ' + online.length + '</strong></span></div>';
+  h += '<div class="worth"><span class="pts">' + LADDER[hi] + '</span><span class="unit">b</span></div>';
+  h += ladder(hi);
+  h += '<div class="timerrow"><div class="timer"><div class="bar" id="bar"></div></div><span class="secs" id="secs"></span></div>';
+  h += '<ol class="hints" aria-label="Nápovedy">';
+  for (let i = 0; i < 5; i++) {
+    if (i < hints.length) {
+      h += '<li class="hint' + (i === hi ? ' new' : '') + '"><span class="pts">' + LADDER[i] + ' b</span><p>' + esc(hints[i]) + '</p></li>';
+    }
+  }
+  h += '</ol>';
+  const playing = !!(me() && me().name);
+  if (S.myAns) {
+    h += '<div class="locked"><small>Tvoja odpoveď je zamknutá</small><strong>' + esc(S.myAns.text) + '</strong> <span class="dim">za ' + LADDER[S.myAns.hint | 0] + ' b</span></div>';
+  } else if (playing) {
+    h += '<form id="ansForm" class="field" autocomplete="off"><label class="sr" for="ans">Tvoja odpoveď</label>' +
+      '<input id="ans" type="text" maxlength="80" placeholder="Napíš odpoveď" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(S.inp.ans) + '">' +
+      '<button type="submit" class="btn primary" id="ansBtn">Odoslať za ' + LADDER[hi] + ' b</button></form>' +
+      '<p class="dim">Po odoslaní sa odpoveď zamkne. Ak neodpovieš, o 15 sekúnd príde ďalšia nápoveda.</p>';
+  } else if (S.isMod) {
+    h += '<p class="status">Táto otázka ide bez teba. Ak chceš hrať, pripoj sa na tabuli pred ďalšou otázkou.</p>';
+  }
+  if (S.isMod) {
+    h += '<div class="actions"><button class="btn" data-act="endround">Ukončiť kolo teraz</button><button class="btn" data-act="cancelq">Zrušiť otázku</button></div>';
+  }
+  h += scoreboard(answered);
+  return h + '</main>';
+}
+
+function revealBody() {
+  const rv = G().reveal, q = G().q || {}, ans = rv.answers || {}, hints = toArr(rv.hints);
+  const judged = Object.keys(ans).every(u => ans[u].ok === true || ans[u].ok === false);
+  let h = '<main class="qwrap"><div class="qhead"><span>' + esc(q.catName || '') + ' · otázka ' + (q.n || '') + '</span><span>Kolo skončilo</span></div>';
+  h += '<div class="card gold"><p class="kicker">Správna odpoveď</p><h2>' + esc(rv.answer) + '</h2></div>';
+  h += '<ol class="hints" aria-label="Nápovedy a odpovede">' + hints.map((t, i) => {
+    const chips = Object.keys(ans).filter(u => (ans[u].hint | 0) === i).map(u => {
+      const a = ans[u], cls = a.ok === true ? ' ok' : a.ok === false ? ' no' : '';
+      const mark = a.ok === true ? '<span class="mark">✓ +' + LADDER[i] + '</span>' : a.ok === false ? '<span class="mark">✗</span>' : '';
+      const jb = S.isMod ? '<button class="j' + (a.ok === true ? ' on-ok' : '') + '" data-act="judge" data-uid="' + esc(u) + '" data-v="1" aria-label="Označiť ' + esc(a.name) + ' ako správne">✓</button>' +
+        '<button class="j' + (a.ok === false ? ' on-no' : '') + '" data-act="judge" data-uid="' + esc(u) + '" data-v="0" aria-label="Označiť ' + esc(a.name) + ' ako nesprávne">✗</button>' : '';
+      return '<span class="chip' + cls + '"><b>' + esc(a.name) + ':</b> ' + esc(a.text) + ' ' + mark + jb + '</span>';
+    }).join('');
+    return '<li class="hint"><span class="pts">' + LADDER[i] + ' b</span><div class="body"><p>' + esc(t) + '</p>' + (chips ? '<div class="chips">' + chips + '</div>' : '') + '</div></li>';
+  }).join('') + '</ol>';
+  const silent = Object.keys(S.players).filter(u => S.players[u].name && !ans[u]).map(u => esc(S.players[u].name));
+  if (silent.length) h += '<p class="dim">Bez odpovede: ' + silent.join(', ') + '</p>';
+  if (S.isMod) {
+    h += '<div class="actions"><button class="btn primary" data-act="award"' + (judged ? '' : ' disabled') + '>Pripísať body a pokračovať</button>' +
+      (judged ? '' : '<span class="dim">Označ každú odpoveď ako správnu alebo nesprávnu.</span>') + '</div>';
+  } else {
+    h += '<p class="status">Moderátor vyhodnocuje odpovede…</p>';
+  }
+  return h + '</main>';
+}
+
+function joinBody() {
+  return '<main class="setup"><p class="lede">Zadaj svoje meno a počkaj na moderátora. Pri každej otázke uvidíš nápovedu a 15 sekúnd na odpoveď. Čím skôr uhádneš, tým viac bodov získaš. Odpoveď po odoslaní už nezmeníš.</p>' +
+    ladder(-1).replace('class="ladder"', 'class="ladder big"') +
+    '<form id="joinForm" class="field stack" autocomplete="off"><label class="sr" for="nm">Tvoje meno</label>' +
+    '<input id="nm" type="text" maxlength="20" placeholder="Tvoje meno" autocomplete="nickname" value="' + esc(S.inp.nm) + '">' +
+    '<button type="submit" class="btn primary">Vstúpiť do hry</button></form></main>';
+}
+
+function uploadCard() {
+  return '<main><div class="card gold"><h2>Nahraj otázky</h2><p>Databáza zatiaľ neobsahuje žiadne otázky. Vyber súbor <strong>otazky.json</strong>, ktorý máš uložený u seba (nikdy ho nedávaj do repozitára na GitHube).</p>' +
+    '<p><label class="btn primary file">Vybrať otazky.json<input type="file" id="bankFile" accept=".json,application/json" hidden></label></p></div></main>';
+}
+
+function loginHtml() {
+  if (S.isMod) return '';
+  let h = '<div class="foot"><button class="linkbtn" data-act="logintoggle">Som moderátor</button>';
+  if (S.loginOpen) {
+    h += '<form id="loginForm" class="field stack" autocomplete="on"><label class="sr" for="em">E-mail moderátora</label>' +
+      '<input id="em" type="email" placeholder="E-mail" autocomplete="username" value="' + esc(S.inp.em) + '">' +
+      '<label class="sr" for="pw">Heslo</label><input id="pw" type="password" placeholder="Heslo" autocomplete="current-password" value="' + esc(S.inp.pw) + '">' +
+      '<button type="submit" class="btn primary">Prihlásiť</button>' + (S.loginErr ? '<p class="err" role="alert">' + esc(S.loginErr) + '</p>' : '') + '</form>';
+  }
+  return h + '</div>';
+}
+
+function view() {
+  let body;
+  if (S.stage === 'boot') body = '<p class="status">Pripájam sa…</p>';
+  else if (S.stage === 'error') body = '<div class="card"><h2>Pripojenie zlyhalo</h2><p>' + esc(S.err) + '</p><p class="dim">Skontroluj firebase-config.js a pravidlá databázy a stránku obnov.</p></div>';
+  else {
+    const g = G();
+    const live = g.phase === 'question' && g.q ? 'q' : g.phase === 'reveal' && g.reveal ? 'r' : 'b';
+    if (S.isMod) body = !S.bank ? uploadCard() : live === 'q' ? questionBody() : live === 'r' ? revealBody() : boardBody();
+    else if (!(me() && me().name)) body = joinBody();
+    else body = live === 'q' ? questionBody() : live === 'r' ? revealBody() : boardBody();
+  }
+  let who = '';
+  if (S.isMod) who = '<span class="badge mod">Moderátor</span>' + (me() && me().name ? '<span class="badge">' + esc(me().name) + '</span>' : '') + '<button class="btn small" data-act="logout">Odhlásiť</button>';
+  else if (me() && me().name) who = '<span class="badge">' + esc(me().name) + '</span>';
+  const banner = DEMO ? '<p class="banner">Demo režim: hra funguje len medzi kartami v tomto prehliadači. Pre online hru vyplň súbor firebase-config.js.</p>' : '';
+  return banner + '<header class="top"><div><p class="kicker">Kvíz s nápovedami</p><h1>Päť nápovedí</h1></div><div class="who">' + who + '</div></header>' +
+    body + loginHtml() + (S.toast ? '<div class="toast" role="status">' + esc(S.toast) + '</div>' : '');
+}
+
+function render() {
+  const ae = document.activeElement;
+  const id = ae && ae.id, isIn = ae && ae.matches && ae.matches('input[type=text],input[type=email],input[type=password]');
+  let sel = null;
+  if (isIn) { try { sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {} }
+  $app.innerHTML = view();
+  if (id && isIn) {
+    const el = $(id);
+    if (el) { el.focus({ preventScroll: true }); if (sel && sel[0] != null) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+  }
+  tick();
+}
+
+/* ---------- udalosti ---------- */
+$app.addEventListener('input', e => { if (e.target.id) S.inp[e.target.id] = e.target.value; });
+$app.addEventListener('change', e => {
+  if (e.target.id === 'bankFile' && e.target.files && e.target.files[0]) uploadBank(e.target.files[0]);
+});
+$app.addEventListener('submit', e => {
+  e.preventDefault();
+  const id = e.target.id;
+  if (id === 'ansForm') submitAnswer();
+  else if (id === 'joinForm') join();
+  else if (id === 'loginForm') modLogin();
+});
+$app.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const a = b.getAttribute('data-act');
+  let confirmChanged = false;
+  if (a !== 'newgame' && S.confirmNew) { S.confirmNew = false; confirmChanged = true; }
+  if (a !== 'fullreset' && S.confirmWipe) { S.confirmWipe = false; confirmChanged = true; }
+  if (confirmChanged) render();
+  if (a === 'logintoggle') { S.loginOpen = !S.loginOpen; render(); }
+  else if (a === 'logout') modLogout();
+  else if (a === 'open') startQuestion(b.getAttribute('data-cat'), +b.getAttribute('data-idx'));
+  else if (a === 'endround') endRound();
+  else if (a === 'cancelq') cancelQuestion();
+  else if (a === 'judge') judge(b.getAttribute('data-uid'), b.getAttribute('data-v') === '1');
+  else if (a === 'award') award();
+  else if (a === 'newgame') newGame();
+  else if (a === 'fullreset') completeReset();
+  else if (a === 'kick') {
+    const u = b.getAttribute('data-uid');
+    write({ ['players/' + u]: null, ['answers/' + u]: null });
+  }
+});
+
+boot();
+})();
+</script>
+</body>
+</html>
